@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .analytics-page *,
+    .analytics-page *::before,
+    .analytics-page *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    .analytics-page {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .analytics-page .layout { display: flex; min-height: 100vh; }
+
+    .analytics-page .sidebar {
+      width: 240px;
+      background: var(--sidebar-bg);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      transition: transform var(--transition);
+    }
+
+    .analytics-page .sidebar-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 20px 24px;
+      font-size: 1.3rem; font-weight: 700; color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .analytics-page .sidebar-header i { color: var(--primary); font-size: 1.5rem; }
+
+    .analytics-page .sidebar-nav {
+      display: flex; flex-direction: column;
+      padding: 16px 12px; gap: 4px; flex: 1;
+    }
+
+    .analytics-page .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      color: var(--sidebar-text); text-decoration: none;
+      font-size: 0.9rem; transition: all var(--transition);
+    }
+
+    .analytics-page .nav-item i { width: 20px; text-align: center; font-size: 1.1rem; }
+    .analytics-page .nav-item:hover { background: rgba(255,255,255,0.08); color: var(--sidebar-active); }
+    .analytics-page .nav-item.active { background: var(--primary); color: #fff; }
+
+    .analytics-page .main {
+      flex: 1; margin-left: 240px;
+      display: flex; flex-direction: column;
+    }
+
+    .analytics-page .header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 50;
+      transition: background var(--transition);
+    }
+
+    .analytics-page .hamburger {
+      display: none; background: none; border: none;
+      font-size: 1.3rem; color: var(--text); cursor: pointer; padding: 4px;
+    }
+
+    .analytics-page .header-actions {
+      display: flex; align-items: center; gap: 8px; margin-left: auto;
+    }
+
+    .analytics-page .icon-btn {
+      background: none; border: none; width: 40px; height: 40px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); font-size: 1.1rem; cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .analytics-page .icon-btn:hover { background: var(--bg); color: var(--text); }
+
+    .analytics-page .content {
+      padding: 28px;
+      display: flex; flex-direction: column; gap: 24px;
+    }
+
+    .analytics-page .page-header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+    .analytics-page .page-header p { color: var(--text-secondary); font-size: 0.9rem; }
+
+    .analytics-page .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .analytics-page .kpi-card {
+      background: var(--surface);
+      border-radius: var(--radius); padding: 20px;
+      display: flex; align-items: center; gap: 16px;
+      box-shadow: var(--shadow);
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+
+    .analytics-page .kpi-icon {
+      width: 48px; height: 48px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+
+    .analytics-page .kpi-icon.total { background: #eef2ff; color: #6366f1; }
+    .analytics-page .kpi-icon.avg-int { background: #d1fae5; color: #10b981; }
+    .analytics-page .kpi-icon.level { background: #fef3c7; color: #f59e0b; }
+    .analytics-page .kpi-icon.converted { background: #fce7f3; color: #ec4899; }
+
+    [data-theme="dark"] .analytics-page .kpi-icon.total { background: #1e1e3a; }
+    [data-theme="dark"] .analytics-page .kpi-icon.avg-int { background: #1a2d1a; }
+    [data-theme="dark"] .analytics-page .kpi-icon.level { background: #2d2d1a; }
+    [data-theme="dark"] .analytics-page .kpi-icon.converted { background: #2d1a2d; }
+
+    .analytics-page .kpi-info { display: flex; flex-direction: column; }
+    .analytics-page .kpi-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .analytics-page .kpi-value { font-size: 1.5rem; font-weight: 700; line-height: 1.3; }
+
+    .analytics-page .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .analytics-page .card {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+
+    .analytics-page .full-width { grid-column: 1 / -1; }
+
+    .analytics-page .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+
+    .analytics-page .card-header h3 { font-size: 0.95rem; font-weight: 600; }
+    .analytics-page .card-body { padding: 20px; }
+
+    .analytics-page .table-responsive { overflow-x: auto; }
+
+    .analytics-page table {
+      width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    }
+
+    .analytics-page thead th {
+      text-align: left; padding: 10px 14px; font-weight: 600;
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--text-secondary); border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .analytics-page tbody td {
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+    }
+
+    .analytics-page tbody tr:hover { background: var(--surface-hover); }
+
+    .analytics-page .status-badge {
+      display: inline-flex; padding: 2px 10px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+
+    .analytics-page .status-badge.New { background: #dbeafe; color: #1e40af; }
+    .analytics-page .status-badge.Contacted { background: #e0e7ff; color: #3730a3; }
+    .analytics-page .status-badge.CNR { background: #fce7f3; color: #9d174d; }
+    .analytics-page .status-badge.Hot { background: #fef3c7; color: #92400e; }
+    .analytics-page .status-badge.Not { background: #fce4ec; color: #c62828; }
+    .analytics-page .status-badge.Converted { background: #d1fae5; color: #065f46; }
+
+    [data-theme="dark"] .analytics-page .status-badge.New { background: #1e3a5f; color: #93c5fd; }
+    [data-theme="dark"] .analytics-page .status-badge.Contacted { background: #2d2d5e; color: #a5b4fc; }
+    [data-theme="dark"] .analytics-page .status-badge.CNR { background: #2d1a2d; color: #f9a8d4; }
+    [data-theme="dark"] .analytics-page .status-badge.Hot { background: #2d2d1a; color: #fcd34d; }
+    [data-theme="dark"] .analytics-page .status-badge.Not { background: #2d1a1a; color: #fca5a5; }
+    [data-theme="dark"] .analytics-page .status-badge.Converted { background: #064e3b; color: #6ee7b7; }
+
+    .analytics-page .stat-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; font-size: 0.85rem;
+    }
+
+    .analytics-page .stat-row .label { color: var(--text-secondary); }
+    .analytics-page .stat-row .value { font-weight: 600; }
+    .analytics-page .stat-bar {
+      height: 6px; border-radius: 3px; background: var(--border);
+      margin-top: 4px; overflow: hidden;
+    }
+
+    .analytics-page .stat-bar-fill {
+      height: 100%; border-radius: 3px;
+      background: var(--primary); transition: width 0.5s ease;
+    }
+
+    .analytics-page .no-data {
+      text-align: center; padding: 40px 20px;
+      color: var(--text-secondary); font-size: 0.9rem;
+    }
+
+    .analytics-page .no-data i { font-size: 2rem; margin-bottom: 12px; opacity: 0.5; }
+
+    @media (max-width: 1024px) {
+      .analytics-page .chart-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .analytics-page .sidebar { transform: translateX(-100%); }
+      .analytics-page .sidebar.open { transform: translateX(0); }
+      .analytics-page .main { margin-left: 0; }
+      .analytics-page .hamburger { display: block; }
+      .analytics-page .content { padding: 16px; }
+      .analytics-page .header { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="analytics-page">
+    <div class="layout">
+      <aside class="sidebar" id="analyticsSidebar">
+        <div class="sidebar-header">
+          <i class="fas fa-chart-line"></i> AssessPro
+        </div>
+      <nav class="sidebar-nav">
+        <a href="analytics.html" class="nav-item active"><i class="fas fa-chart-pie"></i> Analytics</a>
+        <a href="form.html" class="nav-item"><i class="fas fa-edit"></i> New Assessment</a>
+        <a href="dashboard.html" class="nav-item"><i class="fas fa-list"></i> Submissions</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="analyticsLogout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+      </aside>
+
+      <main class="main">
+        <header class="header">
+          <button class="hamburger" id="analyticsHamburger"><i class="fas fa-bars"></i></button>
+          <span style="font-weight:600;font-size:1.05rem">Analytics</span>
+          <div class="header-actions">
+            <button id="analyticsThemeToggle" class="icon-btn"><i class="fas fa-moon"></i></button>
+          </div>
+        </header>
+
+        <section class="content">
+          <div class="page-header">
+            <h1>Assessment Analytics</h1>
+            <p id="lastUpdated">Aggregated from submitted demo assessments.</p>
+          </div>
+
+          <div class="kpi-grid" id="kpiGrid"></div>
+
+          <div class="chart-grid">
+            <div class="card">
+              <div class="card-header"><h3>By Level</h3></div>
+              <div class="card-body"><canvas id="levelChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>By Language</h3></div>
+              <div class="card-body"><canvas id="languageChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Interest Level</h3></div>
+              <div class="card-body"><canvas id="interestChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>By Status</h3></div>
+              <div class="card-body"><canvas id="statusChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="card full-width">
+            <div class="card-header"><h3>All Submissions</h3></div>
+            <div class="card-body table-responsive" id="submissionsTableWrap"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      (async () => {
+        try {
+          const r = await fetch('/api/me');
+          const d = await r.json();
+          if (!d.authenticated) { window.location.href = 'login.html'; return; }
+        } catch { window.location.href = 'login.html'; }
+      })();
+
+      document.getElementById('analyticsLogout')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = 'index.html';
+      });
+
+      const toggle = document.getElementById('analyticsThemeToggle');
+      const html = document.documentElement;
+      const saved = localStorage.getItem('theme') || 'light';
+      html.setAttribute('data-theme', saved);
+      toggle.innerHTML = saved === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+      toggle.addEventListener('click', () => {
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        toggle.innerHTML = next === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+      });
+
+      const hamburger = document.getElementById('analyticsHamburger');
+      const sidebar = document.getElementById('analyticsSidebar');
+      hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
+      document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !hamburger.contains(e.target))
+          sidebar.classList.remove('open');
+      });
+
+      const COLORS = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+
+      function statusClass(s) {
+        const m = { 'New':'New','Contacted':'Contacted','CNR and Messaged':'CNR','Hot/Potential':'Hot','CNR 1':'CNR','CNR 2':'CNR','CNR 3':'CNR','Not Interested':'Not','Converted':'Converted' };
+        return m[s] || 'New';
+      }
+
+      function getColors() {
+        const s = getComputedStyle(document.body);
+        return {
+          text: s.getPropertyValue('--text-secondary').trim(),
+          border: s.getPropertyValue('--border').trim(),
+          primary: s.getPropertyValue('--primary').trim(),
+          success: s.getPropertyValue('--success').trim(),
+          danger: s.getPropertyValue('--danger').trim(),
+          warning: s.getPropertyValue('--warning').trim(),
+        };
+      }
+
+      let charts = {};
+
+      function makeChart(id, type, labels, data, label, colors) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        if (charts[id]) charts[id].destroy();
+        const c = getColors();
+        charts[id] = new Chart(ctx, {
+          type,
+          data: {
+            labels,
+            datasets: [{
+              label: label || '',
+              data,
+              backgroundColor: colors || c.primary + '33',
+              borderColor: c.primary,
+              borderWidth: type === 'bar' ? 2 : 0,
+              borderRadius: type === 'bar' ? 6 : 0,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: type !== 'bar', labels: { color: c.text, usePointStyle: true, padding: 12 } },
+            },
+            scales: type === 'bar' ? {
+              y: { ticks: { color: c.text }, grid: { color: c.border } },
+              x: { ticks: { color: c.text }, grid: { display: false } },
+            } : undefined,
+          },
+        });
+      }
+
+      function makePie(id, labels, data, bgColors) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        if (charts[id]) charts[id].destroy();
+        const c = getColors();
+        charts[id] = new Chart(ctx, {
+          type: 'doughnut',
+          data: { labels, datasets: [{ data, backgroundColor: bgColors || COLORS, borderWidth: 0 }] },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { position: 'bottom', labels: { color: c.text, padding: 12, usePointStyle: true } } },
+          },
+        });
+      }
+
+      function rebuildOnTheme() {
+        new MutationObserver(() => {
+          Object.keys(charts).forEach(k => { if (charts[k]) charts[k].destroy(); });
+          charts = {};
+          loadData();
+        }).observe(html, { attributes: true, attributeFilter: ['data-theme'] });
+      }
+
+      async function loadData() {
+        try {
+          const [summary, overTime, list] = await Promise.all([
+            fetch('/api/analytics/summary').then(r => r.json()),
+            fetch('/api/analytics/over-time').then(r => r.json()),
+            fetch('/api/assessments').then(r => r.json()),
+          ]);
+
+          if (document.getElementById('lastUpdated'))
+            document.getElementById('lastUpdated').textContent = summary.total + ' assessment' + (summary.total !== 1 ? 's' : '') + ' on record. Updated just now.';
+
+          renderKpis(summary);
+          renderLevelChart(summary.byLevel);
+          renderLanguageChart(summary.byLanguage);
+          renderInterestChart(summary.byInterest);
+          renderStatusChart(summary.byStatus);
+          renderTable(list);
+        } catch (e) {
+          document.querySelector('.analytics-page .content').innerHTML =
+            '<div class="no-data"><i class="fas fa-database"></i><p>No data yet. Submit an assessment first.</p></div>';
+        }
+      }
+
+      function renderKpis(summary) {
+        const grid = document.getElementById('kpiGrid');
+        const converted = (summary.byStatus || []).find(s => s.status === 'Converted');
+        grid.innerHTML = `
+          <div class="kpi-card">
+            <div class="kpi-icon total"><i class="fas fa-clipboard-check"></i></div>
+            <div class="kpi-info"><span class="kpi-label">Total Assessments</span><span class="kpi-value">${summary.total}</span></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon avg-int"><i class="fas fa-star"></i></div>
+            <div class="kpi-info"><span class="kpi-label">Avg Interest</span><span class="kpi-value">${summary.avgInterest}</span></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon level"><i class="fas fa-layer-group"></i></div>
+            <div class="kpi-info"><span class="kpi-label">Levels</span><span class="kpi-value">${summary.byLevel.length}</span></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon converted"><i class="fas fa-check-circle"></i></div>
+            <div class="kpi-info"><span class="kpi-label">Converted</span><span class="kpi-value">${converted ? converted.count : 0}</span></div>
+          </div>
+        `;
+      }
+
+      function renderLevelChart(data) {
+        const labels = data.map(d => d.level);
+        const vals = data.map(d => d.count);
+        if (!labels.length) return makePie('levelChart', ['No data'], [1], ['#e5e7eb']);
+        makePie('levelChart', labels, vals, COLORS.slice(0, labels.length));
+      }
+
+      function renderLanguageChart(data) {
+        const labels = data.map(d => d.language);
+        const vals = data.map(d => d.count);
+        if (!labels.length) return makePie('languageChart', ['No data'], [1], ['#e5e7eb']);
+        makePie('languageChart', labels, vals);
+      }
+
+      function renderInterestChart(data) {
+        const labels = data.map(d => d.interest_level + '/5');
+        const vals = data.map(d => d.count);
+        const bg = ['#ef4444','#f97316','#f59e0b','#84cc16','#10b981'];
+        makeChart('interestChart', 'bar', labels, vals, 'Count', bg);
+      }
+
+      function renderStatusChart(data) {
+        const labels = data.map(d => d.status);
+        const vals = data.map(d => d.count);
+        if (!labels.length) return makePie('statusChart', ['No data'], [1], ['#e5e7eb']);
+        const statusColors = {
+          'New':'#6366f1','Contacted':'#8b5cf6','CNR and Messaged':'#ec4899','Hot/Potential':'#f59e0b',
+          'CNR 1':'#f97316','CNR 2':'#f97316','CNR 3':'#f97316','Not Interested':'#ef4444','Converted':'#10b981',
+        };
+        makePie('statusChart', labels, vals, labels.map(l => statusColors[l] || '#6b7280'));
+      }
+
+      function renderTable(data) {
+        const wrap = document.getElementById('submissionsTableWrap');
+        if (!data.length) {
+          wrap.innerHTML = '<div class="no-data"><i class="fas fa-inbox"></i><p>No submissions yet.</p></div>';
+          return;
+        }
+        wrap.innerHTML = `
+          <table>
+            <thead><tr><th>Student</th><th>Slot</th><th>Level</th><th>Interest</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>${data.map(a => `
+              <tr>
+                <td><strong>${a.student_name}</strong></td>
+                <td>${a.slot}</td>
+                <td><span class="status-badge ${a.level}">${a.level}</span></td>
+                <td>${'★'.repeat(a.interest_level || 0)}${'☆'.repeat(5 - (a.interest_level || 0))}</td>
+                <td><span class="status-badge ${statusClass(a.status)}">${a.status}</span></td>
+                <td style="color:var(--text-secondary);font-size:0.8rem">${new Date(a.created_at + 'Z').toLocaleDateString()}</td>
+              </tr>
+            `).join('')}</tbody>
+          </table>`;
+      }
+
+      rebuildOnTheme();
+      loadData();
+    });
+  </script>
+</body>
+</html>

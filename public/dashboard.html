@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <i class="fas fa-clipboard-list"></i> AssessPro
+      </div>
+      <nav class="sidebar-nav">
+        <a href="form.html"><i class="fas fa-edit"></i> New Assessment</a>
+        <a href="dashboard.html" class="active"><i class="fas fa-list"></i> Submissions</a>
+        <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analytics</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+        <span class="topbar-title">Dashboard</span>
+        <div class="topbar-right">
+          <span class="topbar-user" id="userName"></span>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div class="page-header">
+          <h1>Assessments</h1>
+          <p>View and manage all student assessment responses.</p>
+        </div>
+
+        <div class="dashboard-controls">
+          <input type="text" id="searchInput" placeholder="Search by name or slot..." style="flex:1;max-width:300px">
+          <select id="statusFilter">
+            <option value="">All Statuses</option>
+            <option value="New">New</option>
+            <option value="Contacted">Contacted</option>
+            <option value="CNR and Messaged">CNR and Messaged</option>
+            <option value="Hot/Potential">Hot/Potential</option>
+            <option value="CNR 1">CNR 1</option>
+            <option value="CNR 2">CNR 2</option>
+            <option value="CNR 3">CNR 3</option>
+            <option value="Not Interested">Not Interested</option>
+            <option value="Converted">Converted</option>
+          </select>
+          <select id="slotFilter">
+            <option value="">All Slots</option>
+          </select>
+          <span id="countBadge" style="font-size:0.85rem;color:var(--text-secondary);margin-left:auto">0 entries</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Slot</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+      <h2 id="modalTitle">Assessment Details</h2>
+      <div class="modal-status">
+        <label>Status:
+          <select id="statusSelect">
+            <option value="New">New</option>
+            <option value="Contacted">Contacted</option>
+            <option value="CNR and Messaged">CNR and Messaged</option>
+            <option value="Hot/Potential">Hot/Potential</option>
+            <option value="CNR 1">CNR 1</option>
+            <option value="CNR 2">CNR 2</option>
+            <option value="CNR 3">CNR 3</option>
+            <option value="Not Interested">Not Interested</option>
+            <option value="Converted">Converted</option>
+          </select>
+        </label>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    let assessments = [];
+    let currentId = null;
+
+    // Check auth
+    (async () => {
+      try {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        if (!data.authenticated) {
+          window.location.href = 'login.html';
+          return;
+        }
+        document.getElementById('userName').textContent = data.name;
+      } catch {
+        window.location.href = 'login.html';
+      }
+    })();
+
+    // Load slots for filter
+    (async () => {
+      const res = await fetch('/api/slots');
+      const slots = await res.json();
+      const sel = document.getElementById('slotFilter');
+      sel.innerHTML = '<option value="">All Slots</option>' + slots.map(s => `<option value="${s}">${s}</option>`).join('');
+    })();
+
+    async function loadAssessments() {
+      try {
+        const res = await fetch('/api/assessments');
+        assessments = await res.json();
+        renderTable();
+      } catch (err) {
+        console.error('Failed to load assessments', err);
+      }
+    }
+
+    function statusClass(s) {
+      const map = {
+        'New': 'New',
+        'Contacted': 'Contacted',
+        'CNR and Messaged': 'CNR',
+        'Hot/Potential': 'Hot',
+        'CNR 1': 'CNR',
+        'CNR 2': 'CNR',
+        'CNR 3': 'CNR',
+        'Not Interested': 'Not',
+        'Converted': 'Converted'
+      };
+      return map[s] || 'New';
+    }
+
+    function renderTable() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+      const slotFilter = document.getElementById('slotFilter').value;
+
+      const filtered = assessments.filter(a => {
+        const matchSearch = a.student_name.toLowerCase().includes(search) || a.slot.toLowerCase().includes(search);
+        const matchStatus = !statusFilter || a.status === statusFilter;
+        const matchSlot = !slotFilter || a.slot === slotFilter;
+        return matchSearch && matchStatus && matchSlot;
+      });
+
+      document.getElementById('countBadge').textContent = filtered.length + ' entr' + (filtered.length === 1 ? 'y' : 'ies');
+
+      const tbody = document.getElementById('tableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-secondary)">No assessments found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(a => `
+        <tr data-id="${a.id}">
+          <td><strong>${a.student_name}</strong></td>
+          <td>${a.slot}</td>
+          <td><span class="status-badge ${statusClass(a.status)}">${a.status}</span></td>
+          <td style="color:var(--text-secondary);font-size:0.85rem">${new Date(a.created_at + 'Z').toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('tr').forEach(tr => {
+        tr.addEventListener('click', () => openModal(parseInt(tr.dataset.id)));
+      });
+    }
+
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('statusFilter').addEventListener('change', renderTable);
+    document.getElementById('slotFilter').addEventListener('change', renderTable);
+
+    async function openModal(id) {
+      currentId = id;
+      try {
+        const res = await fetch('/api/assessments/' + id);
+        const a = await res.json();
+        document.getElementById('modalTitle').textContent = a.student_name + ' — ' + a.slot;
+        document.getElementById('statusSelect').value = a.status;
+
+        const body = document.getElementById('modalBody');
+        body.innerHTML = `
+          <div class="modal-field"><label>Student Age</label><div class="value">${a.student_age}</div></div>
+          <div class="modal-field"><label>Language</label><div class="value">${a.language}</div></div>
+          <div class="modal-field"><label>Level</label><div class="value"><span class="status-badge ${a.level}">${a.level}</span></div></div>
+          ${a.topics_known.length ? `<div class="modal-field"><label>Topics Known</label><div class="topic-chips">${a.topics_known.map(t => `<span class="topic-chip">${t}</span>`).join('')}</div></div>` : ''}
+          ${a.topics_covered.length ? `<div class="modal-field"><label>Topics Covered During Demo</label><div class="topic-chips">${a.topics_covered.map(t => `<span class="topic-chip">${t}</span>`).join('')}</div></div>` : ''}
+          ${a.start_topic ? `<div class="modal-field"><label>Recommended Start Topic</label><div class="value">${a.start_topic}</div></div>` : ''}
+          ${a.revision_topics.length ? `<div class="modal-field"><label>Topics Needing Revision</label><div class="topic-chips">${a.revision_topics.map(t => `<span class="topic-chip">${t}</span>`).join('')}</div></div>` : ''}
+          <div class="modal-field"><label>Feedback</label><div class="value">${a.feedback}</div></div>
+          <div class="modal-field"><label>Interest Level</label><div class="value">${'★'.repeat(a.interest_level)}${'☆'.repeat(5-a.interest_level)} (${a.interest_level}/5)</div></div>
+          ${a.additional_remarks ? `<div class="modal-field"><label>Additional Remarks</label><div class="value">${a.additional_remarks}</div></div>` : ''}
+          <div class="modal-field"><label>Submitted</label><div class="value">${new Date(a.created_at + 'Z').toLocaleString()}</div></div>
+        `;
+        document.getElementById('modal').classList.add('open');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    document.getElementById('modalClose').addEventListener('click', () => {
+      document.getElementById('modal').classList.remove('open');
+    });
+
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        document.getElementById('modal').classList.remove('open');
+      }
+    });
+
+    document.getElementById('statusSelect').addEventListener('change', async (e) => {
+      if (!currentId) return;
+      const status = e.target.value;
+      try {
+        const res = await fetch('/api/assessments/' + currentId + '/status', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if (data.success) {
+          loadAssessments();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // Hamburger
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // Logout
+    document.getElementById('logoutLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = 'index.html';
+    });
+
+    loadAssessments();
+  </script>
+</body>
+</html>

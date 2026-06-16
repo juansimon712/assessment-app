@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Assessment</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <i class="fas fa-clipboard-list"></i> AssessPro
+      </div>
+      <nav class="sidebar-nav">
+        <a href="form.html" class="active"><i class="fas fa-edit"></i> New Assessment</a>
+        <a href="dashboard.html"><i class="fas fa-list"></i> Submissions</a>
+        <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analytics</a>
+      </nav>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+        <span class="topbar-title">New Assessment</span>
+        <div class="topbar-right"></div>
+      </header>
+
+      <div class="content-area">
+        <div class="form-page">
+          <div class="page-header">
+            <h1>Student Demo Assessment</h1>
+            <p>Evaluate the student's level, topics covered, and provide recommendations.</p>
+          </div>
+
+          <form id="assessmentForm">
+            <div class="form-section">
+              <h2>Basic Information</h2>
+              <div class="form-group">
+                <label for="slot">Demo Slot Number *</label>
+                <select id="slot" required></select>
+              </div>
+              <div class="form-group">
+                <label for="student_name">Student Full Name *</label>
+                <input type="text" id="student_name" placeholder="Enter student's full name" required>
+              </div>
+              <div class="form-group">
+                <label for="student_age">Student Age *</label>
+                <input type="text" id="student_age" placeholder="e.g. 12 years" required>
+              </div>
+              <div class="form-group">
+                <label>Preferred Language of Instruction *</label>
+                <div class="radio-group" id="languageGroup">
+                  <label><input type="radio" name="language" value="Malayalam" required><span>Malayalam</span></label>
+                  <label><input type="radio" name="language" value="English"><span>English</span></label>
+                  <label><input type="radio" name="language" value="Hindi"><span>Hindi</span></label>
+                  <label><input type="radio" name="language" value="Tamil"><span>Tamil</span></label>
+                  <label><input type="radio" name="language" value="Manglish"><span>Manglish</span></label>
+                  <label><input type="radio" name="language" value="Hinglish"><span>Hinglish</span></label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Assessed Student Level *</label>
+                <div class="radio-group" id="levelGroup">
+                  <label><input type="radio" name="level" value="Beginner" required><span>Beginner</span></label>
+                  <label><input type="radio" name="level" value="Intermediate"><span>Intermediate</span></label>
+                  <label><input type="radio" name="level" value="Advanced"><span>Advanced</span></label>
+                </div>
+              </div>
+            </div>
+
+            <div id="levelSections">
+              <div class="form-section level-section hidden" data-level="Beginner">
+                <h2>Beginner Level Assessment</h2>
+                <div class="form-group">
+                  <label>What topics does the student already know before the demo?</label>
+                  <div class="checkbox-group" id="beginner_known"></div>
+                </div>
+                <div class="form-group">
+                  <label>What specific topics were successfully covered during the demo?</label>
+                  <p class="hint">Must be sure that the student has learned the topic.</p>
+                  <div class="checkbox-group" id="beginner_covered"></div>
+                </div>
+                <div class="form-group">
+                  <label for="beginner_start">From what level or topic should the structured class officially begin?</label>
+                  <input type="text" id="beginner_start" placeholder="e.g. Start from Functions">
+                </div>
+                <div class="form-group">
+                  <label>Are there any topics that need backup or revision?</label>
+                  <div class="checkbox-group" id="beginner_revision"></div>
+                </div>
+              </div>
+
+              <div class="form-section level-section hidden" data-level="Intermediate">
+                <h2>Intermediate Level Assessment</h2>
+                <div class="form-group">
+                  <label>What topics does the student already know before the demo?</label>
+                  <div class="checkbox-group" id="intermediate_known"></div>
+                </div>
+                <div class="form-group">
+                  <label>What specific topics were successfully covered during the demo?</label>
+                  <p class="hint">Must be sure that the student has learned the topic.</p>
+                  <div class="checkbox-group" id="intermediate_covered"></div>
+                </div>
+                <div class="form-group">
+                  <label for="intermediate_start">From what level or topic should the structured class officially begin?</label>
+                  <input type="text" id="intermediate_start" placeholder="e.g. Start from OOP">
+                </div>
+                <div class="form-group">
+                  <label>Are there any topics that need backup or revision?</label>
+                  <div class="checkbox-group" id="intermediate_revision"></div>
+                </div>
+              </div>
+
+              <div class="form-section level-section hidden" data-level="Advanced">
+                <h2>Advanced Level Assessment</h2>
+                <div class="form-group">
+                  <label for="advanced_start">From what level or topic should the structured class officially begin?</label>
+                  <input type="text" id="advanced_start" placeholder="e.g. Start from advanced concepts">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h2>Final Evaluation</h2>
+              <div class="form-group">
+                <label for="feedback">Feedback About the Student's Performance *</label>
+                <textarea id="feedback" placeholder="Describe the student's performance during the demo class..." required></textarea>
+              </div>
+              <div class="form-group">
+                <label>Parent/Guardian Admission Interest Level *</label>
+                <div style="margin-top:8px">
+                  <div class="scale-group" id="interestGroup">
+                    <label>
+                      <input type="radio" name="interest" value="1" required>
+                      <span class="scale-num">1</span>
+                      <span class="scale-label">Not Interested</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="interest" value="2">
+                      <span class="scale-num">2</span>
+                      <span class="scale-label">Slightly Interested</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="interest" value="3">
+                      <span class="scale-num">3</span>
+                      <span class="scale-label">Moderately Interested</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="interest" value="4">
+                      <span class="scale-num">4</span>
+                      <span class="scale-label">Interested</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="interest" value="5">
+                      <span class="scale-num">5</span>
+                      <span class="scale-label">Highly Interested / Ready to Enroll</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="remarks">Additional Remarks</label>
+                <textarea id="remarks" placeholder="Any other notes..."></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Assessment</button>
+              <button type="reset" class="btn btn-secondary">Reset</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TOPICS = {
+      Beginner: [
+        'Coordinates', 'Piece Movements', 'Value of Pieces', 'Capture', 'Check',
+        'Escaping Check', 'Checkmate', 'Checkmate Patterns', 'Special moves', 'All draws',
+        'King and queen mate', 'King and rook mate', 'Opening principles', 'Hanging pieces',
+        'Counting pieces', 'Double attack', 'Skewer', 'Pin', 'Discovered attack'
+      ],
+      Intermediate: [
+        'Tournament Rules', 'Phases of the Game', 'Italian Game', 'Smothered mate',
+        'Sicilian Defense', 'Desperado and zwichenswang', 'Windmill', 'Ruy Lopez',
+        'Remove and destroy', 'Zugzwang', 'Italian bc5', 'King opposition', 'Rook endgames',
+        'Naidorf', 'King and pawn', 'Passed pawn', 'd4 Opening Basics', 'Outpost', 'Open file',
+        'd5/Nf6', 'Rook 7th rank', 'Double bishop mate', 'Reti'
+      ],
+      Advanced: []
+    };
+
+    // Populate slots
+    (async () => {
+      const res = await fetch('/api/slots');
+      const slots = await res.json();
+      const sel = document.getElementById('slot');
+      sel.innerHTML = '<option value="">Select slot</option>' + slots.map(s => `<option value="${s}">${s}</option>`).join('');
+    })();
+
+    function buildCheckboxes(containerId, topics) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML =
+        `<label class="select-all"><input type="checkbox" class="select-all-cb"> <strong>Select All</strong></label>` +
+        topics.map(t => `<label><input type="checkbox" value="${t}"> ${t}</label>`).join('');
+
+      container.querySelector('.select-all-cb').addEventListener('change', function() {
+        const cbs = container.querySelectorAll('input[type="checkbox"]:not(.select-all-cb)');
+        cbs.forEach(cb => cb.checked = this.checked);
+      });
+    }
+
+    Object.keys(TOPICS).forEach(level => {
+      const l = level.toLowerCase();
+      buildCheckboxes(`${l}_known`, TOPICS[level]);
+      buildCheckboxes(`${l}_covered`, TOPICS[level]);
+      buildCheckboxes(`${l}_revision`, TOPICS[level]);
+    });
+
+    // Conditional sections
+    const levelRadios = document.querySelectorAll('input[name="level"]');
+    const sections = document.querySelectorAll('.level-section');
+
+    levelRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        sections.forEach(s => {
+          s.classList.toggle('hidden', s.dataset.level !== radio.value);
+        });
+      });
+    });
+
+    // Form submission
+    document.getElementById('assessmentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const level = document.querySelector('input[name="level"]:checked')?.value;
+      if (!level) return alert('Please select a student level');
+
+      const getChecked = (containerId) => {
+        return Array.from(document.querySelectorAll(`#${containerId} input:checked`)).map(cb => cb.value);
+      };
+
+      const l = level.toLowerCase();
+      const payload = {
+        slot: document.getElementById('slot').value,
+        student_name: document.getElementById('student_name').value,
+        student_age: document.getElementById('student_age').value,
+        language: document.querySelector('input[name="language"]:checked')?.value,
+        level: level,
+        topics_known: getChecked(`${l}_known`),
+        topics_covered: getChecked(`${l}_covered`),
+        start_topic: document.getElementById(`${l}_start`).value,
+        revision_topics: getChecked(`${l}_revision`),
+        feedback: document.getElementById('feedback').value,
+        interest_level: parseInt(document.querySelector('input[name="interest"]:checked')?.value),
+        additional_remarks: document.getElementById('remarks').value
+      };
+
+      if (!payload.slot || !payload.student_name || !payload.student_age || !payload.language || !payload.feedback || !payload.interest_level) {
+        alert('Please fill all required fields');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/assessments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Assessment submitted successfully!');
+          window.location.href = 'dashboard.html';
+        } else {
+          alert(data.error || 'Submission failed');
+        }
+      } catch (err) {
+        alert('Server error. Is the server running?');
+      }
+    });
+
+    // Hamburger
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+
+  </script>
+</body>
+</html>
