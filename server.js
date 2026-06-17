@@ -270,7 +270,7 @@ async function syncSheet() {
     const sheets = google.sheets({ version: 'v4', auth });
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "'Trial 2.0'!A:J",
+      range: "'Trial 2.0'!A:R",
     });
     const rows = res.data.values || [];
     const entries = [];
@@ -285,6 +285,10 @@ async function syncSheet() {
         time: (r[7] || '').trim(),
         tutor_name: (r[8] || '').trim(),
         student_name: (r[9] || '').trim(),
+        age: (r[11] || '').trim(),
+        language: (r[12] || '').trim(),
+        agent_name: (r[13] || '').trim(),
+        phone: (r[17] || '').trim(),
       });
     }
     sheetDataCache = entries;
