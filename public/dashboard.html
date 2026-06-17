@@ -41,11 +41,15 @@
           <h1>Demo Tracking</h1>
           <p>Auto-refreshes every 30s. <span id="sheetSyncInfo"></span></p>
         </div>
-        <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center">
+        <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <label style="font-size:0.85rem;color:var(--text-secondary)">Filter by Tutor:</label>
           <select id="tutorFilter" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)">
             <option value="">All Tutors</option>
           </select>
+          <label style="font-size:0.85rem;color:var(--text-secondary);margin-left:8px">Date:</label>
+          <input type="date" id="dateFilter" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem">
+          <label style="font-size:0.85rem;color:var(--text-secondary);margin-left:8px">Slot:</label>
+          <input type="text" id="slotFilter" placeholder="Search slot..." style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem;width:140px">
         </div>
         <div class="table-wrap">
           <table>
@@ -106,6 +110,8 @@
     loadTutors();
 
     document.getElementById('tutorFilter').addEventListener('change', loadSheetData);
+    document.getElementById('dateFilter').addEventListener('change', renderFilteredSheet);
+    document.getElementById('slotFilter').addEventListener('input', renderFilteredSheet);
 
     document.getElementById('sheetTableBody').addEventListener('click', async (e) => {
       const tr = e.target.closest('tr[data-row]');
@@ -176,6 +182,43 @@
       window.location.href = 'index.html';
     });
 
+    let cachedSheetData = { entries: [], lastSync: null };
+
+    function renderFilteredSheet() {
+      const dateVal = document.getElementById('dateFilter').value;
+      const slotVal = document.getElementById('slotFilter').value.toLowerCase().trim();
+      const entries = cachedSheetData.entries.filter(e => {
+        if (dateVal) {
+          const parts = dateVal.split('-');
+          const ddmm = parts[2] + '/' + parts[1] + '/' + parts[0];
+          if (e.date !== ddmm && e.date !== dateVal) return false;
+        }
+        if (slotVal && !(e.slot || '').toLowerCase().includes(slotVal)) return false;
+        return true;
+      });
+      const tbody = document.getElementById('sheetTableBody');
+      if (!entries.length) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-secondary)">No sheet data found</td></tr>';
+        return;
+      }
+      const statuses = ['New', 'Contacted', 'Demo Done', 'Demo Rescheduled', 'Demo Cancelled', 'Demo Not Done', 'Converted', 'Not Interested'];
+      tbody.innerHTML = entries.map(e => `
+        <tr data-row="${e.row}" style="cursor:pointer">
+          <td>${e.date || '-'}</td>
+          <td>${e.time || '-'}</td>
+          <td>${e.slot || '-'}</td>
+          <td><strong>${e.student_name || '-'}</strong></td>
+          <td>${e.age || '-'}</td>
+          <td>${e.language || '-'}</td>
+          <td><span class="status-badge ${(() => { const s = e.demo_status.toLowerCase(); if (s.includes('not done')) return 'DemoNotDone'; if (s.includes('done')) return 'DemoDone'; if (s === 'converted') return 'Converted'; return 'New'; })()}">${e.demo_status}</span></td>
+          <td><select class="sheet-status-select" data-row="${e.row}" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8rem;background:var(--surface);color:var(--text)" onclick="event.stopPropagation()">${statuses.map(s => `<option value="${s}" ${s === e.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+          <td>${e.tutor_name || '-'}</td>
+          <td>${e.agent_name || '-'}</td>
+          <td>${e.phone || '-'}</td>
+        </tr>
+      `).join('');
+    }
+
     async function loadSheetData() {
       try {
         const filter = document.getElementById('tutorFilter').value;
@@ -183,28 +226,8 @@
         const res = await fetch(url);
         const data = await res.json();
         document.getElementById('sheetSyncInfo').textContent = data.lastSync ? 'Last sync: ' + new Date(data.lastSync + 'Z').toLocaleTimeString() : '';
-        const tbody = document.getElementById('sheetTableBody');
-        const entries = data.entries || [];
-        if (!entries.length) {
-          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-secondary)">No sheet data found</td></tr>';
-          return;
-        }
-        const statuses = ['New', 'Contacted', 'Demo Done', 'Demo Rescheduled', 'Demo Cancelled', 'Demo Not Done', 'Converted', 'Not Interested'];
-        tbody.innerHTML = entries.map(e => `
-          <tr data-row="${e.row}" style="cursor:pointer">
-            <td>${e.date || '-'}</td>
-            <td>${e.time || '-'}</td>
-            <td>${e.slot || '-'}</td>
-            <td><strong>${e.student_name || '-'}</strong></td>
-            <td>${e.age || '-'}</td>
-            <td>${e.language || '-'}</td>
-            <td><span class="status-badge ${(() => { const s = e.demo_status.toLowerCase(); if (s.includes('not done')) return 'DemoNotDone'; if (s.includes('done')) return 'DemoDone'; if (s === 'converted') return 'Converted'; return 'New'; })()}">${e.demo_status}</span></td>
-            <td><select class="sheet-status-select" data-row="${e.row}" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8rem;background:var(--surface);color:var(--text)" onclick="event.stopPropagation()">${statuses.map(s => `<option value="${s}" ${s === e.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
-            <td>${e.tutor_name || '-'}</td>
-            <td>${e.agent_name || '-'}</td>
-            <td>${e.phone || '-'}</td>
-          </tr>
-        `).join('');
+        cachedSheetData = { entries: data.entries || [], lastSync: data.lastSync };
+        renderFilteredSheet();
       } catch (err) {
         console.error('Failed to load sheet data', err);
       }
