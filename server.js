@@ -368,6 +368,8 @@ app.post('/api/sync-sheet', requireAuth, async (req, res) => {
 });
 
 syncSheet();
+setTimeout(syncSheet, 5000);
+setTimeout(syncSheet, 15000);
 const SYNC_INTERVAL = 30000;
 setInterval(syncSheet, SYNC_INTERVAL);
 
