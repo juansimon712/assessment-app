@@ -282,7 +282,13 @@
           </div>
 
           <div class="card full-width">
-            <div class="card-header"><h3>All Submissions</h3></div>
+            <div class="card-header">
+              <h3>All Submissions</h3>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <input type="date" id="dateFilter" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem">
+                <input type="text" id="slotFilter" placeholder="Search slot..." style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem;width:160px">
+              </div>
+            </div>
             <div class="card-body table-responsive" id="submissionsTableWrap"></div>
           </div>
         </section>
@@ -346,6 +352,7 @@
       }
 
       let charts = {};
+      let allSubmissions = [];
 
       function makeChart(id, type, labels, data, label, colors) {
         const ctx = document.getElementById(id);
@@ -419,7 +426,10 @@
           renderLanguageChart(summary.byLanguage);
           renderInterestChart(summary.byInterest);
           renderStatusChart(summary.byStatus);
-          renderTable(list);
+          allSubmissions = list;
+          renderTable();
+          document.getElementById('dateFilter').addEventListener('change', renderTable);
+          document.getElementById('slotFilter').addEventListener('input', renderTable);
         } catch (e) {
           document.querySelector('.analytics-page .content').innerHTML =
             '<div class="no-data"><i class="fas fa-database"></i><p>No data yet. Submit an assessment first.</p></div>';
@@ -481,10 +491,22 @@
         makePie('statusChart', labels, vals, labels.map(l => statusColors[l] || '#6b7280'));
       }
 
-      function renderTable(data) {
+      function renderTable() {
         const wrap = document.getElementById('submissionsTableWrap');
+        const dateVal = document.getElementById('dateFilter').value;
+        const slotVal = document.getElementById('slotFilter').value.toLowerCase().trim();
+        let data = allSubmissions;
+        if (dateVal) {
+          data = data.filter(a => {
+            const d = new Date(a.created_at + 'Z');
+            return d.toISOString().slice(0, 10) === dateVal;
+          });
+        }
+        if (slotVal) {
+          data = data.filter(a => (a.slot || '').toLowerCase().includes(slotVal));
+        }
         if (!data.length) {
-          wrap.innerHTML = '<div class="no-data"><i class="fas fa-inbox"></i><p>No submissions yet.</p></div>';
+          wrap.innerHTML = '<div class="no-data"><i class="fas fa-inbox"></i><p>No submissions match the filters.</p></div>';
           return;
         }
         wrap.innerHTML = `
