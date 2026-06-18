@@ -2,10 +2,6 @@
 
 A web app for **Eight Times Eight (ETE)** chess coaches to evaluate students during demo classes. Tracks demo scheduling, student assessments, and admissions pipeline — synced with Google Sheets as the source of truth.
 
-## Live URL
-
-**https://assessment-app-production-74d9.up.railway.app**
-
 ## How It Works
 
 ### Core Workflow
