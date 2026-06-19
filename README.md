@@ -1,6 +1,6 @@
-# ETE Chess Assessment Portal
+# Chess Assessment Portal
 
-A web app for **Eight Times Eight (ETE)** chess coaches to evaluate students during demo classes. Tracks demo scheduling, student assessments, and admissions pipeline — synced with Google Sheets as the source of truth.
+A web app for chess coaches to evaluate students during demo classes. Tracks demo scheduling, student assessments, and admissions pipeline — synced with Google Sheets as the source of truth.
 
 ## How It Works
 
@@ -63,7 +63,7 @@ Seeded automatically on fresh deploy — single admin, no registration. Credenti
 - **Filter:** Only rows **2904+** (by row number) are included.
 - **Retry:** On startup, retries at 5s and 15s if initial sync fails.
 - **Cache:** Stored in memory (`sheetDataCache`), exposed at `GET /api/sheet-data`.
-- **Skip condition:** Rows where column A is "ETE - please don't delete" or where both A and I are empty.
+- **Skip condition:** Rows where column A contains a header/instruction string, or where both A and I are empty.
 
 ### Sheet Write-Back
 - When a tutor submits an assessment with a `sheet_row` value, the server calls Google Sheets API `spreadsheets.values.update` to write **"Demo Done"** into column A of that row.
