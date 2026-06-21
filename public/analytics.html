@@ -269,7 +269,10 @@
             </div>
             <div class="card">
               <div class="card-header"><h3>By Language</h3></div>
-              <div class="card-body"><canvas id="languageChart"></canvas></div>
+              <div class="card-body">
+                <canvas id="languageChart"></canvas>
+                <div id="languageCounts" style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
+              </div>
             </div>
             <div class="card">
               <div class="card-header"><h3>Interest Level</h3></div>
@@ -479,6 +482,15 @@
       function renderLanguageChart(data) {
         const labels = data.map(d => d.language);
         const vals = data.map(d => d.count);
+        const total = vals.reduce((a, b) => a + b, 0);
+        const container = document.getElementById('languageCounts');
+        container.innerHTML = data.map(d => `
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:0.8rem">
+            <strong>${d.language}</strong>
+            <span style="font-weight:700;color:var(--primary)">${d.count}</span>
+            <span style="color:var(--text-secondary);font-size:0.7rem">(${total ? Math.round(d.count/total*100) : 0}%)</span>
+          </span>
+        `).join('');
         if (!labels.length) return makePie('languageChart', ['No data'], [1], ['#e5e7eb']);
         makePie('languageChart', labels, vals);
       }
