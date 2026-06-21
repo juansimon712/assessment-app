@@ -113,6 +113,45 @@ app.get('/api/me', (req, res) => {
   res.json({ authenticated: true, name: req.session.name, role: req.session.role });
 });
 
+function requireAdmin(req, res, next) {
+  if (!req.session.userId || req.session.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+}
+
+app.get('/api/admin/tutors', requireAuth, requireAdmin, (req, res) => {
+  const tutors = db.prepare("SELECT id, name, email, role, created_at FROM users WHERE role = 'teacher' ORDER BY created_at DESC").all();
+  res.json(tutors);
+});
+
+app.post('/api/admin/tutors', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    if (existing) {
+      return res.status(409).json({ error: 'A user with this email already exists' });
+    }
+    const hash = bcrypt.hashSync(password, 10);
+    db.prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)').run(name, email, hash, 'teacher');
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/admin/tutors/:id', requireAuth, requireAdmin, (req, res) => {
+  const tutor = db.prepare('SELECT id, role FROM users WHERE id = ?').get(req.params.id);
+  if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
+  if (tutor.role === 'admin') return res.status(403).json({ error: 'Cannot delete admin users' });
+  db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
 app.get('/api/slots', (req, res) => {
   const slots = [];
   for (let i = 1; i <= 26; i++) {

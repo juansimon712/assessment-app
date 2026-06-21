@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Tutors</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .tutor-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+    .tutor-form-card, .tutor-list-card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px; }
+    .tutor-form-card h2, .tutor-list-card h2 { font-size:1.1rem; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+    .tutor-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+    .tutor-table th { text-align:left; padding:10px 12px; font-weight:600; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary); border-bottom:2px solid var(--border); }
+    .tutor-table td { padding:10px 12px; border-bottom:1px solid var(--border); }
+    .tutor-table tr:hover { background:var(--surface-hover); }
+    .btn-sm { padding:6px 14px; font-size:0.8rem; }
+    .empty-state { text-align:center; padding:40px; color:var(--text-secondary); }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <i class="fas fa-clipboard-list"></i> AssessPro
+      </div>
+      <nav class="sidebar-nav">
+        <a href="form.html"><i class="fas fa-edit"></i> New Assessment</a>
+        <a href="dashboard.html"><i class="fas fa-list"></i> Submissions</a>
+        <a href="tutor-view.html"><i class="fas fa-user-graduate"></i> Tutor View</a>
+        <a href="admin-tutors.html" class="active"><i class="fas fa-users-cog"></i> Manage Tutors</a>
+        <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analytics</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+        <span class="topbar-title">Manage Tutors</span>
+        <div class="topbar-right">
+          <span class="topbar-user" id="userName"></span>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div class="page-header">
+          <h1>Tutor Management</h1>
+          <p>Add, view, and manage tutor accounts.</p>
+        </div>
+
+        <div class="tutor-grid">
+          <div class="tutor-form-card">
+            <h2>Add New Tutor</h2>
+            <form id="tutorForm">
+              <div class="form-group">
+                <label for="name">Tutor Name *</label>
+                <input type="text" id="name" placeholder="e.g. John Doe" required>
+              </div>
+              <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" placeholder="e.g. tutor@email.com" required>
+              </div>
+              <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" placeholder="Min 6 characters" minlength="6" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-user-plus"></i> Add Tutor</button>
+            </form>
+            <div id="formMessage" style="margin-top:12px"></div>
+          </div>
+
+          <div class="tutor-list-card">
+            <h2>Tutors</h2>
+            <table class="tutor-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Added</th>
+                  <th style="width:60px"></th>
+                </tr>
+              </thead>
+              <tbody id="tutorTableBody"></tbody>
+            </table>
+            <div id="emptyState" class="empty-state">No tutors yet. Add one above.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check auth & role
+    (async () => {
+      try {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        if (!data.authenticated) {
+          window.location.href = 'login.html';
+          return;
+        }
+        if (data.role !== 'admin') {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+        document.getElementById('userName').textContent = data.name;
+      } catch {
+        window.location.href = 'login.html';
+      }
+    })();
+
+    async function loadTutors() {
+      try {
+        const res = await fetch('/api/admin/tutors');
+        const tutors = await res.json();
+        const tbody = document.getElementById('tutorTableBody');
+        const empty = document.getElementById('emptyState');
+        if (!tutors.length) {
+          tbody.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+        empty.style.display = 'none';
+        tbody.innerHTML = tutors.map(t => `
+          <tr>
+            <td><strong>${t.name}</strong></td>
+            <td style="color:var(--text-secondary)">${t.email}</td>
+            <td style="color:var(--text-secondary);font-size:0.8rem">${new Date(t.created_at + 'Z').toLocaleDateString()}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteTutor(${t.id}, '${t.name}')"><i class="fas fa-trash"></i></button></td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteTutor(id, name) {
+      if (!confirm('Delete tutor "' + name + '"? This cannot be undone.')) return;
+      try {
+        const res = await fetch('/api/admin/tutors/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          loadTutors();
+        } else {
+          alert(data.error || 'Failed to delete');
+        }
+      } catch (err) {
+        alert('Server error');
+      }
+    }
+
+    document.getElementById('tutorForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!name || !email || !password) {
+        document.getElementById('formMessage').innerHTML = '<div class="alert error">All fields are required</div>';
+        return;
+      }
+      if (password.length < 6) {
+        document.getElementById('formMessage').innerHTML = '<div class="alert error">Password must be at least 6 characters</div>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/tutors', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('formMessage').innerHTML = '<div class="alert success">Tutor added successfully!</div>';
+          document.getElementById('tutorForm').reset();
+          loadTutors();
+          setTimeout(() => document.getElementById('formMessage').innerHTML = '', 3000);
+        } else {
+          document.getElementById('formMessage').innerHTML = '<div class="alert error">' + (data.error || 'Failed to add tutor') + '</div>';
+        }
+      } catch (err) {
+        document.getElementById('formMessage').innerHTML = '<div class="alert error">Server error</div>';
+      }
+    });
+
+    // Hamburger
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // Logout
+    document.getElementById('logoutLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = 'index.html';
+    });
+
+    loadTutors();
+  </script>
+</body>
+</html>
