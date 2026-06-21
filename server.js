@@ -339,6 +339,9 @@ app.post('/api/assessments', (req, res) => {
     );
     if (sheet_row) {
       updateSheetRow(sheet_row, 'Demo Done');
+      db.prepare('INSERT INTO sheet_statuses (row_number, status) VALUES (?, ?) ON CONFLICT(row_number) DO UPDATE SET status = ?, updated_at = CURRENT_TIMESTAMP').run(sheet_row, 'Demo Done', 'Demo Done');
+      const entry = sheetDataCache.find(e => e.row === parseInt(sheet_row));
+      if (entry) entry.status = 'Demo Done';
     } else {
       appendToSheet({
         demo_status: 'Demo Done',
@@ -562,13 +565,18 @@ app.get('/api/sheet-data', requireAuth, (req, res) => {
   res.json({ entries, lastSync });
 });
 
-app.patch('/api/sheet-data/:row/status', requireAuth, (req, res) => {
+app.patch('/api/sheet-data/:row/status', requireAuth, async (req, res) => {
   const { status } = req.body;
   const valid = ['New', 'Contacted', 'Demo Done', 'Demo Rescheduled', 'Demo Cancelled', 'Demo Not Done', 'Converted', 'Not Interested'];
   if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
   db.prepare('INSERT INTO sheet_statuses (row_number, status) VALUES (?, ?) ON CONFLICT(row_number) DO UPDATE SET status = ?, updated_at = CURRENT_TIMESTAMP').run(req.params.row, status, status);
   const entry = sheetDataCache.find(e => e.row === parseInt(req.params.row));
   if (entry) entry.status = status;
+  try {
+    await updateSheetRow(req.params.row, status);
+  } catch (e) {
+    console.error('Failed to update sheet:', e.message);
+  }
   res.json({ success: true });
 });
 

@@ -94,6 +94,35 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="demosModal">
+    <div class="modal" style="max-width:900px">
+      <button class="modal-close" id="demosModalClose"><i class="fas fa-times"></i></button>
+      <h2>Demos for <span id="demosTutorName"></span></h2>
+      <div style="margin-top:16px;overflow-x:auto">
+        <table class="tutor-table" id="demosTable" style="min-width:700px">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Slot</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Age</th>
+              <th>Status</th>
+              <th style="width:140px">Update</th>
+            </tr>
+          </thead>
+          <tbody id="demosTableBody"></tbody>
+        </table>
+        <div id="demosEmpty" class="empty-state" style="display:none">No demos for this tutor.</div>
+      </div>
+    </div>
+  </div>
+  <div id="statusToast" style="position:fixed;bottom:20px;right:20px;background:#22c55e;color:white;padding:10px 20px;border-radius:8px;font-size:0.85rem;display:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)"></div>
+  <style>
+    .modal-overlay.open { display:flex; }
+    .status-select { padding:4px 6px; border:1px solid var(--border); border-radius:4px; font-size:0.75rem; background:var(--surface); color:var(--text); cursor:pointer; }
+    .status-update-btn { padding:4px 10px; font-size:0.75rem; margin-left:4px; }
+  </style>
   <script>
     // Check auth & role
     (async () => {
@@ -131,7 +160,7 @@
             <td><strong>${t.name}</strong></td>
             <td style="color:var(--text-secondary);font-family:monospace;font-weight:700;letter-spacing:1px">${t.code || '-'}</td>
             <td style="color:var(--text-secondary);font-size:0.8rem">${new Date(t.created_at + 'Z').toLocaleDateString()}</td>
-            <td><button class="btn btn-danger btn-sm" onclick="deleteTutor(${t.id}, '${t.name}')"><i class="fas fa-trash"></i></button></td>
+            <td><button class="btn btn-sm" onclick="viewTutorDemos('${t.name.replace(/'/g, "\\'")}')" title="View Demos"><i class="fas fa-eye"></i></button> <button class="btn btn-danger btn-sm" onclick="deleteTutor(${t.id}, '${t.name.replace(/'/g, "\\'")}')"><i class="fas fa-trash"></i></button></td>
           </tr>
         `).join('');
       } catch (err) {
@@ -198,6 +227,84 @@
       } catch (err) {
         document.getElementById('formMessage').innerHTML = '<div class="alert error">Server error</div>';
       }
+    });
+
+    // Demo viewer
+    async function viewTutorDemos(name) {
+      document.getElementById('demosTutorName').textContent = name;
+      document.getElementById('demosModal').classList.add('open');
+      const tbody = document.getElementById('demosTableBody');
+      const empty = document.getElementById('demosEmpty');
+      try {
+        const res = await fetch('/api/sheet-tutor/' + encodeURIComponent(name));
+        const entries = await res.json();
+        if (!entries.length) {
+          tbody.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+        empty.style.display = 'none';
+        tbody.innerHTML = entries.map(e => {
+          const statusColors = { 'New':'#6b7280', 'Contacted':'#f59e0b', 'Demo Done':'#22c55e', 'Demo Rescheduled':'#3b82f6', 'Demo Cancelled':'#ef4444', 'Demo Not Done':'#ef4444', 'Converted':'#8b5cf6', 'Not Interested':'#6b7280' };
+          const color = statusColors[e.status] || '#6b7280';
+          return `<tr>
+            <td><strong>${e.student_name || '-'}</strong></td>
+            <td>${e.slot || '-'}</td>
+            <td>${e.date || '-'}</td>
+            <td>${e.time || '-'}</td>
+            <td>${e.age || '-'}</td>
+            <td><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:white;background:${color}">${e.status || 'New'}</span></td>
+            <td>
+              <select class="status-select" data-row="${e.row}">
+                ${['New','Contacted','Demo Done','Demo Rescheduled','Demo Cancelled','Demo Not Done','Converted','Not Interested'].map(s =>
+                  `<option value="${s}" ${e.status === s ? 'selected' : ''}>${s}</option>`
+                ).join('')}
+              </select>
+              <button class="btn btn-sm status-update-btn" onclick="updateDemoStatus(${e.row}, this)">Update</button>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-secondary)">Error loading demos.</td></tr>';
+      }
+    }
+
+    async function updateDemoStatus(row, btn) {
+      const select = btn.previousElementSibling;
+      const status = select.value;
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        const res = await fetch('/api/sheet-data/' + row + '/status', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const toast = document.getElementById('statusToast');
+          toast.textContent = 'Status updated to ' + status;
+          toast.style.display = 'block';
+          setTimeout(() => toast.style.display = 'none', 2000);
+          viewTutorDemos(document.getElementById('demosTutorName').textContent);
+        } else {
+          alert(data.error || 'Failed');
+          btn.disabled = false;
+          btn.textContent = 'Update';
+        }
+      } catch (err) {
+        alert('Server error');
+        btn.disabled = false;
+        btn.textContent = 'Update';
+      }
+    }
+
+    document.getElementById('demosModalClose').addEventListener('click', () => {
+      document.getElementById('demosModal').classList.remove('open');
+    });
+    document.getElementById('demosModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) document.getElementById('demosModal').classList.remove('open');
     });
 
     // Hamburger
