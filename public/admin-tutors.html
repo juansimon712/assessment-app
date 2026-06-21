@@ -61,65 +61,25 @@
                 <label for="name">Tutor Name *</label>
                 <input type="text" id="name" placeholder="e.g. John Doe" required>
               </div>
-              <div class="form-group">
-                <label for="code">Tutor Code *</label>
-                <div style="display:flex;gap:8px">
-                  <input type="text" id="code" placeholder="e.g. JOH12" maxlength="5" required style="flex:1">
-                  <button type="button" class="btn btn-secondary" id="generateCode" style="white-space:nowrap">Generate</button>
-                </div>
-                <small style="color:var(--text-secondary)">5 characters: 3 letters (name start) + 2 digits</small>
-              </div>
               <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-user-plus"></i> Add Tutor</button>
             </form>
             <div id="formMessage" style="margin-top:12px"></div>
           </div>
 
           <div class="tutor-list-card">
-            <h2>Tutors</h2>
-            <table class="tutor-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Code</th>
-                  <th>Added</th>
-                  <th style="width:60px"></th>
-                </tr>
-              </thead>
-              <tbody id="tutorTableBody"></tbody>
-            </table>
-            <div id="emptyState" class="empty-state">No tutors yet. Add one above.</div>
+            <h2>Select Tutor</h2>
+            <select id="tutorDropdown" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:1rem;margin-bottom:16px">
+              <option value="">— Choose a tutor —</option>
+            </select>
+            <div id="demosInline"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="demosModal">
-    <div class="modal" style="max-width:900px">
-      <button class="modal-close" id="demosModalClose"><i class="fas fa-times"></i></button>
-      <h2>Demos for <span id="demosTutorName"></span></h2>
-      <div style="margin-top:16px;overflow-x:auto">
-        <table class="tutor-table" id="demosTable" style="min-width:700px">
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Slot</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Age</th>
-              <th>Status</th>
-              <th style="width:140px">Update</th>
-            </tr>
-          </thead>
-          <tbody id="demosTableBody"></tbody>
-        </table>
-        <div id="demosEmpty" class="empty-state" style="display:none">No demos for this tutor.</div>
-      </div>
-    </div>
-  </div>
   <div id="statusToast" style="position:fixed;bottom:20px;right:20px;background:#22c55e;color:white;padding:10px 20px;border-radius:8px;font-size:0.85rem;display:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)"></div>
   <style>
-    .modal-overlay.open { display:flex; }
     .status-select { padding:4px 6px; border:1px solid var(--border); border-radius:4px; font-size:0.75rem; background:var(--surface); color:var(--text); cursor:pointer; }
     .status-update-btn { padding:4px 10px; font-size:0.75rem; margin-left:4px; }
   </style>
@@ -147,26 +107,24 @@
       try {
         const res = await fetch('/api/admin/tutors');
         const tutors = await res.json();
-        const tbody = document.getElementById('tutorTableBody');
-        const empty = document.getElementById('emptyState');
-        if (!tutors.length) {
-          tbody.innerHTML = '';
-          empty.style.display = 'block';
-          return;
-        }
-        empty.style.display = 'none';
-        tbody.innerHTML = tutors.map(t => `
-          <tr>
-            <td><strong>${t.name}</strong></td>
-            <td style="color:var(--text-secondary);font-family:monospace;font-weight:700;letter-spacing:1px;cursor:pointer" onclick="viewTutorDemos('${t.name.replace(/'/g, "\\'")}')" title="Click to view demos">${t.code || '-'}</td>
-            <td style="color:var(--text-secondary);font-size:0.8rem">${new Date(t.created_at + 'Z').toLocaleDateString()}</td>
-            <td><button class="btn btn-sm" onclick="viewTutorDemos('${t.name.replace(/'/g, "\\'")}')" title="View Demos"><i class="fas fa-eye"></i></button> <button class="btn btn-danger btn-sm" onclick="deleteTutor(${t.id}, '${t.name.replace(/'/g, "\\'")}')"><i class="fas fa-trash"></i></button></td>
-          </tr>
-        `).join('');
+        const select = document.getElementById('tutorDropdown');
+        select.innerHTML = '<option value="">— Choose a tutor —</option>' +
+          tutors.sort((a, b) => a.name.localeCompare(b.name)).map(t =>
+            `<option value="${t.name.replace(/"/g, '&quot;')}">${t.name}</option>`
+          ).join('');
       } catch (err) {
         console.error(err);
       }
     }
+
+    document.getElementById('tutorDropdown').addEventListener('change', function() {
+      const name = this.value;
+      if (!name) {
+        document.getElementById('demosInline').innerHTML = '';
+        return;
+      }
+      viewTutorDemos(name);
+    });
 
     async function deleteTutor(id, name) {
       if (!confirm('Delete tutor "' + name + '"? This cannot be undone.')) return;
@@ -198,17 +156,12 @@
     document.getElementById('tutorForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('name').value.trim();
-      const code = document.getElementById('code').value.trim().toUpperCase();
-
-      if (!name || !code) {
-        document.getElementById('formMessage').innerHTML = '<div class="alert error">Name and code are required</div>';
+      if (!name) {
+        document.getElementById('formMessage').innerHTML = '<div class="alert error">Name is required</div>';
         return;
       }
-      if (code.length < 3) {
-        document.getElementById('formMessage').innerHTML = '<div class="alert error">Code must be at least 3 characters</div>';
-        return;
-      }
-
+      const prefix = name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || 'TUT';
+      const code = prefix + String(Math.abs(name.split('').reduce((h,c) => ((h<<5)-h)+c.charCodeAt(0), 0) % 100)).padStart(2, '0');
       try {
         const res = await fetch('/api/admin/tutors', {
           method: 'POST',
@@ -231,45 +184,58 @@
 
     // Demo viewer
     async function viewTutorDemos(name) {
-      document.getElementById('demosTutorName').textContent = name;
-      document.getElementById('demosModal').classList.add('open');
-      const tbody = document.getElementById('demosTableBody');
-      const empty = document.getElementById('demosEmpty');
+      const container = document.getElementById('demosInline');
+      container.innerHTML = '<p style="color:var(--text-secondary)">Loading...</p>';
       try {
         const res = await fetch('/api/sheet-tutor/' + encodeURIComponent(name));
         const entries = await res.json();
         if (!entries.length) {
-          tbody.innerHTML = '';
-          empty.style.display = 'block';
+          container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px">No demos for this tutor.</p>';
           return;
         }
-        empty.style.display = 'none';
-        tbody.innerHTML = entries.map(e => {
-          const statusColors = { 'New':'#6b7280', 'Contacted':'#f59e0b', 'Demo Done':'#22c55e', 'Demo Rescheduled':'#3b82f6', 'Demo Cancelled':'#ef4444', 'Demo Not Done':'#ef4444', 'Converted':'#8b5cf6', 'Not Interested':'#6b7280' };
-          const sheetStatus = e.demo_status || 'New';
-          const localStatus = e.status || 'New';
-          const displayStatus = localStatus !== 'New' ? localStatus : sheetStatus;
-          const color = statusColors[displayStatus] || '#6b7280';
-          return `<tr>
-            <td><strong>${e.student_name || '-'}</strong></td>
-            <td>${e.slot || '-'}</td>
-            <td>${e.date || '-'}</td>
-            <td>${e.time || '-'}</td>
-            <td>${e.age || '-'}</td>
-            <td><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:white;background:${color}">${displayStatus}</span></td>
-            <td>
-              <select class="status-select" data-row="${e.row}">
-                ${['New','Contacted','Demo Done','Demo Rescheduled','Demo Cancelled','Demo Not Done','Converted','Not Interested'].map(s =>
-                  `<option value="${s}" ${localStatus === s ? 'selected' : ''}>${s}</option>`
-                ).join('')}
-              </select>
-              <button class="btn btn-sm status-update-btn" onclick="updateDemoStatus(${e.row}, this)">Update</button>
-            </td>
-          </tr>`;
-        }).join('');
+        container.innerHTML = `
+          <h3 style="margin-bottom:12px">Demos for ${name}</h3>
+          <div style="overflow-x:auto">
+          <table class="tutor-table" style="min-width:700px">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Slot</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Age</th>
+                <th>Status</th>
+                <th style="width:140px">Update</th>
+              </tr>
+            </thead>
+            <tbody>${entries.map(e => {
+              const statusColors = { 'New':'#6b7280', 'Contacted':'#f59e0b', 'Demo Done':'#22c55e', 'Demo Rescheduled':'#3b82f6', 'Demo Cancelled':'#ef4444', 'Demo Not Done':'#ef4444', 'Converted':'#8b5cf6', 'Not Interested':'#6b7280' };
+              const sheetStatus = e.demo_status || 'New';
+              const localStatus = e.status || 'New';
+              const displayStatus = localStatus !== 'New' ? localStatus : sheetStatus;
+              const color = statusColors[displayStatus] || '#6b7280';
+              return `<tr>
+                <td><strong>${e.student_name || '-'}</strong></td>
+                <td>${e.slot || '-'}</td>
+                <td>${e.date || '-'}</td>
+                <td>${e.time || '-'}</td>
+                <td>${e.age || '-'}</td>
+                <td><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:white;background:${color}">${displayStatus}</span></td>
+                <td>
+                  <select class="status-select" data-row="${e.row}">
+                    ${['New','Contacted','Demo Done','Demo Rescheduled','Demo Cancelled','Demo Not Done','Converted','Not Interested'].map(s =>
+                      `<option value="${s}" ${localStatus === s ? 'selected' : ''}>${s}</option>`
+                    ).join('')}
+                  </select>
+                  <button class="btn btn-sm status-update-btn" onclick="updateDemoStatus(${e.row}, this)">Update</button>
+                </td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table>
+          </div>`;
       } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-secondary)">Error loading demos.</td></tr>';
+        container.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px">Error loading demos.</p>';
       }
     }
 
@@ -290,7 +256,8 @@
           toast.textContent = 'Status updated to ' + status;
           toast.style.display = 'block';
           setTimeout(() => toast.style.display = 'none', 2000);
-          viewTutorDemos(document.getElementById('demosTutorName').textContent);
+          const selectEl = document.getElementById('tutorDropdown');
+          viewTutorDemos(selectEl.value);
         } else {
           alert(data.error || 'Failed');
           btn.disabled = false;
@@ -302,13 +269,6 @@
         btn.textContent = 'Update';
       }
     }
-
-    document.getElementById('demosModalClose').addEventListener('click', () => {
-      document.getElementById('demosModal').classList.remove('open');
-    });
-    document.getElementById('demosModal').addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) document.getElementById('demosModal').classList.remove('open');
-    });
 
     // Hamburger
     document.getElementById('hamburger').addEventListener('click', () => {
