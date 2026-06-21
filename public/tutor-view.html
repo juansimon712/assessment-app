@@ -297,9 +297,18 @@
           const btn = a
             ? `<button class="btn btn-secondary" style="padding:4px 10px;font-size:0.8rem" data-row="${row}" onclick="viewAssessmentByRow(${row})">View</button>`
             : `<button class="btn btn-primary" style="padding:4px 10px;font-size:0.8rem" data-row="${row}" onclick="openForm(${row},'${esc(e.tutor_name)}','${esc(e.student_name)}','${esc(e.slot)}','${esc(e.date)}','${esc(e.time)}','${esc(e.phone)}','${esc(e.age)}','${esc(e.language)}')">Assess</button>`;
-          const conv = a?.status === 'Converted' || e.status === 'Converted' || e.demo_status === 'Converted';
-          const badge = conv
-            ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;background:#cce5ff;color:#004085">Converted</span>'
+          const statusVal = e.status && e.status !== 'New' ? e.status : (e.demo_status && e.demo_status !== 'New' ? e.demo_status : '');
+          const statusColors = {
+            Converted: 'background:#cce5ff;color:#004085',
+            'Demo Done': 'background:#d4edda;color:#155724',
+            'Not Interested': 'background:#f8d7da;color:#721c24',
+            'Demo Rescheduled': 'background:#fff3cd;color:#856404',
+            'Demo Cancelled': 'background:#f8d7da;color:#721c24',
+            'Demo Not Done': 'background:#f8d7da;color:#721c24',
+            Contacted: 'background:#e2e3e5;color:#383d41',
+          };
+          const badge = statusVal
+            ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;${statusColors[statusVal] || 'background:#e2e3e5;color:#383d41'}">${statusVal}</span>`
             : a
               ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;background:#d4edda;color:#155724">Demo Done</span>'
               : '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;background:#fff3cd;color:#856404">Pending</span>';
