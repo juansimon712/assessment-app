@@ -9,18 +9,34 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .landing { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; text-align:center; padding:40px 20px; }
+    .landing h1 { font-size:2rem; margin-bottom:8px; }
+    .landing p { color:var(--text-secondary); margin-bottom:32px; max-width:500px; }
+    .landing-cards { display:flex; gap:24px; flex-wrap:wrap; justify-content:center; }
+    .landing-card { display:flex; flex-direction:column; align-items:center; justify-content:center; width:260px; padding:40px 24px; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); text-decoration:none; color:var(--text); transition:transform 0.15s, box-shadow 0.15s; border:2px solid transparent; }
+    .landing-card:hover { transform:translateY(-4px); box-shadow:0 12px 24px rgba(0,0,0,0.12); border-color:var(--primary); }
+    .landing-card i { font-size:2.5rem; color:var(--primary); margin-bottom:12px; }
+    .landing-card h2 { font-size:1.2rem; margin-bottom:4px; }
+    .landing-card p { font-size:0.85rem; margin:0; }
+  </style>
 </head>
 <body>
   <div class="landing">
-    <h1><i class="fas fa-clipboard-list" style="color:var(--primary)"></i> Student Assessment</h1>
-    <p>Demo class evaluation form for tutors. Assess student level, track topics covered, and manage admissions.</p>
-    <p style="font-size:1.1rem;color:var(--text-secondary)">Redirecting to Tutor Demo Assessment...</p>
-    <div class="landing-actions" id="landingActions">
-      <a href="login.html" style="font-size:0.8rem;color:var(--text-secondary)"><i class="fas fa-sign-in-alt"></i> Admin Login</a>
+    <h1><i class="fas fa-clipboard-list" style="color:var(--primary)"></i> Student Assessment Portal</h1>
+    <p>Demo class evaluation and student management system. Choose your entry point below.</p>
+    <div class="landing-cards">
+      <a href="tutor-view.html" class="landing-card">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <h2>Tutor Demo Update</h2>
+        <p>View your assigned demos, assess students, and submit evaluation forms.</p>
+      </a>
+      <a href="login.html" class="landing-card">
+        <i class="fas fa-sign-in-alt"></i>
+        <h2>Admin Login</h2>
+        <p>Manage submissions, tutors, and view analytics dashboard.</p>
+      </a>
     </div>
-    <script>
-      window.location.href = 'tutor-view.html';
-    </script>
   </div>
 </body>
 </html>
