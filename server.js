@@ -92,13 +92,15 @@ const INITIAL_TUTORS = [
 
 const existingTutorCount = db.prepare("SELECT COUNT(*) AS cnt FROM users WHERE role = 'teacher'").get().cnt;
 if (existingTutorCount === 0) {
-  const insert = db.prepare('INSERT INTO users (name, role, code) VALUES (?, ?, ?)');
+  const insert = db.prepare('INSERT INTO users (name, email, password, role, code) VALUES (?, ?, ?, ?, ?)');
+  const dummyPass = bcrypt.hashSync('tutor123', 10);
   const allCodes = new Set();
   for (const name of INITIAL_TUTORS) {
     let code;
     do { code = generateTutorCode(name); } while (allCodes.has(code));
     allCodes.add(code);
-    insert.run(name, 'teacher', code);
+    const email = name.toLowerCase().replace(/[^a-z0-9]/g, '') + '@tutor.local';
+    insert.run(name, email, dummyPass, 'teacher', code);
   }
   console.log(`Seeded ${INITIAL_TUTORS.length} initial tutors with codes`);
 }
