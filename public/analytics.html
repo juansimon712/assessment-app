@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Analytics</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -99,57 +98,14 @@
     .analytics-page .page-header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
     .analytics-page .page-header p { color: var(--text-secondary); font-size: 0.9rem; }
 
-    .analytics-page .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
+    .analytics-page .no-data {
+      text-align: center; padding: 40px 20px;
+      color: var(--text-secondary); font-size: 0.9rem;
     }
 
-    .analytics-page .kpi-card {
-      background: var(--surface);
-      border-radius: var(--radius); padding: 20px;
-      display: flex; align-items: center; gap: 16px;
-      box-shadow: var(--shadow);
-      transition: background var(--transition), box-shadow var(--transition);
-    }
-
-    .analytics-page .kpi-icon {
-      width: 48px; height: 48px; border-radius: var(--radius-sm);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; flex-shrink: 0;
-    }
-
-    .analytics-page .kpi-icon.total { background: #eef2ff; color: #6366f1; }
-    .analytics-page .kpi-icon.avg-int { background: #d1fae5; color: #10b981; }
-    .analytics-page .kpi-icon.level { background: #fef3c7; color: #f59e0b; }
-    .analytics-page .kpi-icon.converted { background: #fce7f3; color: #ec4899; }
-
-    [data-theme="dark"] .analytics-page .kpi-icon.total { background: #1e1e3a; }
-    [data-theme="dark"] .analytics-page .kpi-icon.avg-int { background: #1a2d1a; }
-    [data-theme="dark"] .analytics-page .kpi-icon.level { background: #2d2d1a; }
-    [data-theme="dark"] .analytics-page .kpi-icon.converted { background: #2d1a2d; }
-
-    .analytics-page .kpi-info { display: flex; flex-direction: column; }
-    .analytics-page .kpi-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-    .analytics-page .kpi-value { font-size: 1.5rem; font-weight: 700; line-height: 1.3; }
-
-    .analytics-page .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-    .analytics-page .card {
-      background: var(--surface); border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      transition: background var(--transition), box-shadow var(--transition);
-    }
+    .analytics-page .no-data i { font-size: 2rem; margin-bottom: 12px; opacity: 0.5; }
 
     .analytics-page .full-width { grid-column: 1 / -1; }
-
-    .analytics-page .card-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 20px; border-bottom: 1px solid var(--border);
-    }
-
-    .analytics-page .card-header h3 { font-size: 0.95rem; font-weight: 600; }
-    .analytics-page .card-body { padding: 20px; }
 
     .analytics-page .table-responsive { overflow-x: auto; }
 
@@ -169,49 +125,6 @@
     }
 
     .analytics-page tbody tr:hover { background: var(--surface-hover); }
-
-    .analytics-page .status-badge {
-      display: inline-flex; padding: 2px 10px; border-radius: 20px;
-      font-size: 0.75rem; font-weight: 600;
-    }
-
-    .analytics-page .status-badge.New { background: #dbeafe; color: #1e40af; }
-    .analytics-page .status-badge.Contacted { background: #e0e7ff; color: #3730a3; }
-    .analytics-page .status-badge.CNR { background: #fce7f3; color: #9d174d; }
-    .analytics-page .status-badge.Hot { background: #fef3c7; color: #92400e; }
-    .analytics-page .status-badge.Not { background: #fce4ec; color: #c62828; }
-    .analytics-page .status-badge.Converted { background: #d1fae5; color: #065f46; }
-
-    [data-theme="dark"] .analytics-page .status-badge.New { background: #1e3a5f; color: #93c5fd; }
-    [data-theme="dark"] .analytics-page .status-badge.Contacted { background: #2d2d5e; color: #a5b4fc; }
-    [data-theme="dark"] .analytics-page .status-badge.CNR { background: #2d1a2d; color: #f9a8d4; }
-    [data-theme="dark"] .analytics-page .status-badge.Hot { background: #2d2d1a; color: #fcd34d; }
-    [data-theme="dark"] .analytics-page .status-badge.Not { background: #2d1a1a; color: #fca5a5; }
-    [data-theme="dark"] .analytics-page .status-badge.Converted { background: #064e3b; color: #6ee7b7; }
-
-    .analytics-page .stat-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 0; font-size: 0.85rem;
-    }
-
-    .analytics-page .stat-row .label { color: var(--text-secondary); }
-    .analytics-page .stat-row .value { font-weight: 600; }
-    .analytics-page .stat-bar {
-      height: 6px; border-radius: 3px; background: var(--border);
-      margin-top: 4px; overflow: hidden;
-    }
-
-    .analytics-page .stat-bar-fill {
-      height: 100%; border-radius: 3px;
-      background: var(--primary); transition: width 0.5s ease;
-    }
-
-    .analytics-page .no-data {
-      text-align: center; padding: 40px 20px;
-      color: var(--text-secondary); font-size: 0.9rem;
-    }
-
-    .analytics-page .no-data i { font-size: 2rem; margin-bottom: 12px; opacity: 0.5; }
 
     @media (max-width: 1024px) {
       .analytics-page .chart-grid { grid-template-columns: 1fr; }
@@ -246,13 +159,11 @@
       </aside>
 
       <main class="main">
-        <header class="header">
-          <button class="hamburger" id="analyticsHamburger"><i class="fas fa-bars"></i></button>
-          <span style="font-weight:600;font-size:1.05rem">Analytics</span>
-          <div class="header-actions">
-            <button id="analyticsThemeToggle" class="icon-btn"><i class="fas fa-moon"></i></button>
-          </div>
-        </header>
+          <header class="header">
+            <button class="hamburger" id="analyticsHamburger"><i class="fas fa-bars"></i></button>
+            <span style="font-weight:600;font-size:1.05rem">Analytics</span>
+            <div class="header-actions"></div>
+          </header>
 
         <section class="content">
           <div class="page-header">
