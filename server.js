@@ -360,6 +360,13 @@ app.post('/api/assessments', (req, res) => {
         age: student_age, language, phone,
       });
     }
+    appendAssessmentToSheet({
+      tutor_name, phone, slot, student_name,
+      student_age, language, level,
+      topics_known, topics_covered, start_topic,
+      revision_topics, feedback, interest_level,
+      additional_remarks, date, time, sheet_row,
+    });
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -436,6 +443,7 @@ app.get('/api/analytics/over-time', requireAuth, (req, res) => {
 const { google } = require('googleapis');
 const fs = require('fs');
 const SPREADSHEET_ID = '1nYvdZwZgqymw89waZXr1gyOVgPtmPN9CuAzQWx5y8Mg';
+const ASSESSMENTS_SHEET_ID = process.env.ASSESSMENTS_SHEET_ID || '1ZjfrqObcRpqYOKvnDBPmiM1H4jQCJXuS01oSLot7_zY';
 
 let CREDENTIALS_PATH = path.join(__dirname, 'google-credentials.json');
 if (process.env.GOOGLE_CREDENTIALS_JSON) {
@@ -494,6 +502,64 @@ async function appendToSheet(data) {
     });
   } catch (err) {
     console.error('Sheet append error:', err.message);
+  }
+}
+
+async function initAssessmentSheet() {
+  try {
+    const sheets = getSheetsClient();
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: ASSESSMENTS_SHEET_ID,
+      range: 'Sheet1!A1:R1',
+    });
+    if (!res.data.values || !res.data.values[0] || !res.data.values[0][0]) {
+      const headers = ['Timestamp', 'Tutor Name', 'Phone', 'Student Name', 'Age', 'Language', 'Level', 'Slot', 'Date', 'Time', 'Interest Level', 'Feedback', 'Topics Known', 'Topics Covered', 'Start Topic', 'Revision Topics', 'Additional Remarks', 'Sheet Row'];
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: ASSESSMENTS_SHEET_ID,
+        range: 'Sheet1!A1:R1',
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [headers] },
+      });
+      console.log('Assessment sheet initialized with headers');
+    }
+  } catch (err) {
+    console.error('Assessment sheet init error:', err.message);
+  }
+}
+
+async function appendAssessmentToSheet(data) {
+  try {
+    const sheets = getSheetsClient();
+    const values = [[
+      new Date().toISOString(),
+      data.tutor_name || '',
+      data.phone || '',
+      data.student_name || '',
+      data.student_age || '',
+      data.language || '',
+      data.level || '',
+      data.slot || '',
+      data.date || '',
+      data.time || '',
+      data.interest_level || '',
+      data.feedback || '',
+      (data.topics_known || []).join(', '),
+      (data.topics_covered || []).join(', '),
+      data.start_topic || '',
+      (data.revision_topics || []).join(', '),
+      data.additional_remarks || '',
+      data.sheet_row || '',
+    ]];
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: ASSESSMENTS_SHEET_ID,
+      range: 'Sheet1!A:R',
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: { values },
+    });
+    console.log('Assessment appended to sheet for', data.student_name);
+  } catch (err) {
+    console.error('Assessment sheet append error:', err.message);
   }
 }
 
@@ -611,6 +677,7 @@ app.post('/api/sync-sheet', requireAuth, async (req, res) => {
 });
 
 syncSheet();
+initAssessmentSheet();
 setTimeout(syncSheet, 5000);
 setTimeout(syncSheet, 15000);
 const SYNC_INTERVAL = 30000;
