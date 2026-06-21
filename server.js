@@ -55,9 +55,32 @@ try { db.exec('ALTER TABLE assessments ADD COLUMN sheet_row INTEGER DEFAULT NULL
 try { db.exec('ALTER TABLE users ADD COLUMN code TEXT UNIQUE'); } catch (e) {}
 
 function generateTutorCode(name) {
-  const prefix = name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+  const cleaned = name.replace(/[^a-zA-Z]/g, '');
+  const prefix = cleaned.substring(0, Math.min(3, cleaned.length)).toUpperCase();
+  if (!prefix) return 'TUT' + String(Math.floor(Math.random() * 100)).padStart(2, '0');
   const digits = String(Math.floor(Math.random() * 100)).padStart(2, '0');
   return prefix + digits;
+}
+
+function syncTutorsFromSheet() {
+  const names = [...new Set(sheetDataCache.map(e => e.tutor_name).filter(Boolean))];
+  const existing = new Set(db.prepare("SELECT name FROM users WHERE role = 'teacher'").all().map(r => r.name.trim().toLowerCase()));
+  const dummyPass = bcrypt.hashSync('tutor123', 10);
+  for (const name of names) {
+    const key = name.trim().toLowerCase();
+    if (!key || existing.has(key)) continue;
+    let code;
+    let attempts = 0;
+    do {
+      code = generateTutorCode(name);
+      attempts++;
+    } while (db.prepare('SELECT id FROM users WHERE code = ?').get(code) && attempts < 100);
+    if (attempts >= 100) continue;
+    const email = key.replace(/[^a-z0-9]/g, '') + '@tutor.local';
+    db.prepare('INSERT INTO users (name, email, password, role, code) VALUES (?, ?, ?, ?, ?)').run(name.trim(), email, dummyPass, 'teacher', code);
+    existing.add(key);
+    console.log(`Auto-created tutor from sheet: ${name.trim()} -> code ${code}`);
+  }
 }
 
 const tutorsWithoutCode = db.prepare("SELECT id, name FROM users WHERE role = 'teacher' AND (code IS NULL OR code = '')").all();
@@ -495,6 +518,7 @@ async function syncSheet() {
     sheetDataCache = entries;
     lastSync = new Date().toISOString();
     console.log(`Sheet synced: ${entries.length} entries`);
+    syncTutorsFromSheet();
   } catch (err) {
     console.error('Sheet sync error:', err.message);
   }
