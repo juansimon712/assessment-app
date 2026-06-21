@@ -297,7 +297,7 @@
           const btn = a
             ? `<button class="btn btn-secondary" style="padding:4px 10px;font-size:0.8rem" data-row="${row}" onclick="viewAssessmentByRow(${row})">View</button>`
             : `<button class="btn btn-primary" style="padding:4px 10px;font-size:0.8rem" data-row="${row}" onclick="openForm(${row},'${esc(e.tutor_name)}','${esc(e.student_name)}','${esc(e.slot)}','${esc(e.date)}','${esc(e.time)}','${esc(e.phone)}','${esc(e.age)}','${esc(e.language)}')">Assess</button>`;
-          const statusVal = e.status && e.status !== 'New' ? e.status : (e.demo_status && e.demo_status !== 'New' ? e.demo_status : '');
+          const sheetStatus = e.status && e.status !== 'New' ? e.status : (e.demo_status && e.demo_status !== 'New' ? e.demo_status : '');
           const statusColors = {
             Converted: 'background:#cce5ff;color:#004085',
             'Demo Done': 'background:#d4edda;color:#155724',
@@ -307,11 +307,11 @@
             'Demo Not Done': 'background:#f8d7da;color:#721c24',
             Contacted: 'background:#e2e3e5;color:#383d41',
           };
-          const badge = statusVal
-            ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;${statusColors[statusVal] || 'background:#e2e3e5;color:#383d41'}">${statusVal}</span>`
+          const badge = sheetStatus
+            ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;${statusColors[sheetStatus] || 'background:#e2e3e5;color:#383d41'}">${sheetStatus}</span>`
             : a
               ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;background:#d4edda;color:#155724">Demo Done</span>'
-              : '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;background:#fff3cd;color:#856404">Pending</span>';
+              : '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;background:#fff3cd;color:#856404">New</span>';
           return `<tr style="cursor:pointer" data-row="${row}">
             <td>${e.time || '-'}</td>
             <td>${e.date || '-'}</td>
