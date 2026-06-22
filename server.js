@@ -645,7 +645,7 @@ async function syncTutorCodesToSheet() {
     });
     console.log(`Tutor codes synced to 'Tutor Code' tab: ${tutors.length} tutors`);
   } catch (err) {
-    if (err.message && err.message.includes('named range')) {
+    if (err.message && (err.message.includes('named range') || err.message.includes('does not exist') || err.message.includes('Unable to parse'))) {
       try {
         const sheets = getSheetsClient();
         await sheets.spreadsheets.batchUpdate({
