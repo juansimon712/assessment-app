@@ -6,7 +6,14 @@ const path = require('path');
 const SQLiteStore = require('better-sqlite3-session-store')(session);
 
 const app = express();
-const db = new Database(path.join(__dirname, 'data.db'));
+const fs = require('fs');
+const DB_PATH = process.env.DB_PATH || (process.env.RAILWAY_SERVICE_ID ? '/data/data.db' : path.join(__dirname, 'data.db'));
+const oldDb = path.join(__dirname, 'data.db');
+if (DB_PATH !== oldDb && !fs.existsSync(DB_PATH) && fs.existsSync(oldDb)) {
+  fs.copyFileSync(oldDb, DB_PATH);
+  console.log('Migrated existing data.db to', DB_PATH);
+}
+const db = new Database(DB_PATH);
 
 
 db.exec(`
@@ -508,7 +515,6 @@ app.get('/api/analytics/over-time', requireAuth, (req, res) => {
 
 // Google Sheets integration
 const { google } = require('googleapis');
-const fs = require('fs');
 const SPREADSHEET_ID = '1nYvdZwZgqymw89waZXr1gyOVgPtmPN9CuAzQWx5y8Mg';
 const ASSESSMENTS_SHEET_ID = process.env.ASSESSMENTS_SHEET_ID || '1ZjfrqObcRpqYOKvnDBPmiM1H4jQCJXuS01oSLot7_zY';
 
