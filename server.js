@@ -733,7 +733,7 @@ app.get('/api/sheet-tutor/:name', (req, res) => {
       return words.some(w => w.length > 1 && sn.includes(w));
     });
   }
-  res.json(entries);
+  res.json(entries.sort((a, b) => b.row - a.row));
 });
 
 app.get('/api/sheet-data', requireAuth, (req, res) => {
