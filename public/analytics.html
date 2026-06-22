@@ -171,6 +171,13 @@
             <p>Ranked by conversion rate (Converted ÷ Total Demos Done × 100).</p>
           </div>
 
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+            <label style="font-size:0.85rem;color:var(--text-secondary)">From:</label>
+            <input type="date" id="dateFrom" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem">
+            <label style="font-size:0.85rem;color:var(--text-secondary)">To:</label>
+            <input type="date" id="dateTo" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem">
+          </div>
+
           <div class="card full-width">
             <div class="card-header">
               <h3>Conversion Ranking</h3>
@@ -207,16 +214,39 @@
           sidebar.classList.remove('open');
       });
 
+      function normalizeDate(val) {
+        if (!val) return '';
+        const m = val.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})$/);
+        if (!m) return val;
+        let dd = m[1].padStart(2, '0');
+        let mm = m[2].padStart(2, '0');
+        let yy = m[3];
+        if (yy.length === 2) yy = '20' + yy;
+        return yy + '-' + mm + '-' + dd;
+      }
+
+      function inDateRange(dateStr, from, to) {
+        const d = normalizeDate(dateStr);
+        if (!d) return true;
+        return (!from || d >= from) && (!to || d <= to);
+      }
+
       async function loadRanking() {
         const wrap = document.getElementById('tutorRankingWrap');
         const updated = document.getElementById('lastUpdated');
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
         try {
           const [sheetRes, tutorsRes] = await Promise.all([
             fetch('/api/sheet-data').then(r => r.json()),
             fetch('/api/admin/tutors').then(r => r.json()),
           ]);
-          const entries = sheetRes.entries || [];
+          const allEntries = sheetRes.entries || [];
           updated.textContent = new Date().toLocaleString();
+
+          const entries = dateFrom || dateTo
+            ? allEntries.filter(e => inDateRange(e.date, dateFrom, dateTo))
+            : allEntries;
 
           const ranking = tutorsRes.map(t => {
             const tutorEntries = entries.filter(e => {
@@ -262,6 +292,9 @@
           wrap.innerHTML = '<div class="no-data"><i class="fas fa-database"></i><p>Error loading data.</p></div>';
         }
       }
+
+      document.getElementById('dateFrom').addEventListener('change', loadRanking);
+      document.getElementById('dateTo').addEventListener('change', loadRanking);
 
       loadRanking();
     });
