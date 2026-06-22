@@ -136,6 +136,7 @@ function syncTutorsFromSheet() {
       db.prepare('UPDATE users SET name = ? WHERE id = ?').run(canonical, keep.id);
     }
   }
+  syncTutorCodesToSheet();
 }
 
 const tutorsWithoutCode = db.prepare("SELECT id, name FROM users WHERE role = 'teacher' AND (code IS NULL OR code = '')").all();
@@ -629,6 +630,39 @@ async function appendAssessmentToSheet(data) {
   }
 }
 
+async function syncTutorCodesToSheet() {
+  try {
+    const tutors = db.prepare("SELECT name, code FROM users WHERE role = 'teacher' AND code IS NOT NULL AND code != '' ORDER BY name ASC").all();
+    if (!tutors.length) return;
+    const sheets = getSheetsClient();
+    const headers = [['Name', 'Code']];
+    const rows = tutors.map(t => [t.name, t.code]);
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "'Tutor Code'!A1",
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: [...headers, ...rows] },
+    });
+    console.log(`Tutor codes synced to 'Tutor Code' tab: ${tutors.length} tutors`);
+  } catch (err) {
+    if (err.message && err.message.includes('named range')) {
+      try {
+        const sheets = getSheetsClient();
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_ID,
+          requestBody: { requests: [{ addSheet: { properties: { title: 'Tutor Code' } } }] },
+        });
+        console.log("Created 'Tutor Code' tab");
+        await syncTutorCodesToSheet();
+      } catch (e2) {
+        console.error('Failed to create Tutor Code tab:', e2.message);
+      }
+    } else {
+      console.error('Tutor code sheet sync error:', err.message);
+    }
+  }
+}
+
 let sheetDataCache = [];
 let lastSync = null;
 
@@ -747,10 +781,13 @@ app.post('/api/sync-sheet', requireAuth, async (req, res) => {
 
 syncSheet();
 initAssessmentSheet();
+syncTutorCodesToSheet();
 setTimeout(syncSheet, 5000);
 setTimeout(syncSheet, 15000);
+setTimeout(syncTutorCodesToSheet, 10000);
 const SYNC_INTERVAL = 30000;
 setInterval(syncSheet, SYNC_INTERVAL);
+setInterval(syncTutorCodesToSheet, 60000);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
