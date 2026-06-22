@@ -79,6 +79,7 @@ const TUTOR_NAME_ALIASES = {
   'sumith': 'Sumith',
   'sumit': 'Sumith',
   'sumith rajan': 'Sumith',
+  'sumith ranjan': 'Sumith',
   'sumith raj': 'Sumith',
   'malavika': 'Malavika',
   'malavika r': 'Malavika',
@@ -94,7 +95,8 @@ function normalizeTutorName(raw) {
   const key = (raw || '').trim().toLowerCase();
   if (!key || key.length < 3) return null;
   if (key === 'su') return null;
-  return TUTOR_NAME_ALIASES[key] || raw.trim();
+  const stripped = key.replace(/[^a-z0-9 ]/g, '');
+  return TUTOR_NAME_ALIASES[key] || TUTOR_NAME_ALIASES[stripped] || raw.trim();
 }
 
 function syncTutorsFromSheet() {
@@ -104,7 +106,8 @@ function syncTutorsFromSheet() {
   const canonicalToIds = new Map();
   for (const t of allTeachers) {
     const key = t.name.trim().toLowerCase();
-    const canon = TUTOR_NAME_ALIASES[key] || t.name.trim();
+    const stripped = key.replace(/[^a-z0-9 ]/g, '');
+    const canon = TUTOR_NAME_ALIASES[key] || TUTOR_NAME_ALIASES[stripped] || t.name.trim();
     existingByName.set(key, t);
     if (!canonicalToIds.has(canon)) canonicalToIds.set(canon, []);
     canonicalToIds.get(canon).push(t);
