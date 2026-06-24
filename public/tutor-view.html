@@ -31,6 +31,8 @@
         <a href="dashboard.html"><i class="fas fa-list"></i> Submissions</a>
         <a href="tutor-view.html" class="active"><i class="fas fa-user-graduate"></i> Tutor Demo Assessment</a>
         <a href="admin-tutors.html"><i class="fas fa-users-cog"></i> Manage Tutors</a>
+        <a href="completed.html"><i class="fas fa-check-circle"></i> Demo Completed</a>
+        <a href="conversion.html"><i class="fas fa-percent"></i> Conversion Rate</a>
         <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analytics</a>
       </nav>
       <div class="sidebar-footer">
@@ -78,7 +80,7 @@
                 <th>Date</th>
                 <th>Slot</th>
                 <th>Student Name</th>
-                <th style="width:80px">Status</th>
+                <th style="width:170px">Status</th>
                 <th style="width:90px">Action</th>
               </tr>
             </thead>
@@ -286,6 +288,7 @@
         );
         const assessments = await Promise.all(assessmentPromises);
 
+        const rowClass = s => { const s2 = s.toLowerCase(); if (s2.includes('not done')) return 'DemoNotDone'; if (s2.includes('done')) return 'DemoDone'; if (s2 === 'converted') return 'Converted'; if (s2 === 'hot') return 'Hot'; return 'New'; };
         tbody.innerHTML = entries.map((e, i) => {
           const a = assessments[i];
           const esc = s => (s || '').replace(/'/g, "\\'");
@@ -293,27 +296,13 @@
           const btn = a
             ? `<button class="btn btn-secondary" style="padding:4px 10px;font-size:0.8rem" data-row="${row}" onclick="viewAssessmentByRow(${row})">View</button>`
             : `<button class="btn btn-primary" style="padding:4px 10px;font-size:0.8rem" data-row="${row}" onclick="openForm(${row},'${esc(e.tutor_name)}','${esc(e.student_name)}','${esc(e.slot)}','${esc(e.date)}','${esc(e.time)}','${esc(e.age)}','${esc(e.language)}')">Assess</button>`;
-          const sheetStatus = e.status && e.status !== 'New' ? e.status : (e.demo_status && e.demo_status !== 'New' ? e.demo_status : '');
-          const statusColors = {
-            Converted: 'background:#cce5ff;color:#004085',
-            'Demo Done': 'background:#d4edda;color:#155724',
-            'Not Interested': 'background:#f8d7da;color:#721c24',
-            'Demo Rescheduled': 'background:#fff3cd;color:#856404',
-            'Demo Cancelled': 'background:#f8d7da;color:#721c24',
-            'Demo Not Done': 'background:#f8d7da;color:#721c24',
-            Contacted: 'background:#e2e3e5;color:#383d41',
-          };
-          const badge = sheetStatus
-            ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;${statusColors[sheetStatus] || 'background:#e2e3e5;color:#383d41'}">${sheetStatus}</span>`
-            : a
-              ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;background:#d4edda;color:#155724">Demo Done</span>'
-              : '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:600;background:#fff3cd;color:#856404">New</span>';
-          return `<tr style="cursor:pointer" data-row="${row}">
+          const st = e.demo_status || 'New';
+          return `<tr style="cursor:pointer" data-row="${row}" class="row-${rowClass(e.demo_status)}">
             <td>${e.time || '-'}</td>
             <td>${e.date || '-'}</td>
             <td>${e.slot || '-'}</td>
             <td><strong>${e.student_name || '-'}</strong></td>
-            <td>${badge}</td>
+            <td><span class="status-badge ${rowClass(st)}">${st}</span></td>
             <td>${btn}</td>
           </tr>`;
         }).join('');
