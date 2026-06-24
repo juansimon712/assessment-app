@@ -305,7 +305,10 @@
             <td>${e.date || '-'}</td>
             <td>${e.slot || '-'}</td>
             <td><strong>${e.student_name || '-'}</strong></td>
-            <td><span class="status-badge ${rowClass(st)}">${st}</span></td>
+            <td>
+              <span class="status-badge ${rowClass(st)}">${st}</span>
+              <button class="btn-icon" style="margin-left:6px;color:var(--danger);font-size:0.7rem;padding:2px 6px" onclick="event.stopPropagation();markNotDone(${row})" title="Mark as Demo Not Done">✕ Not Done</button>
+            </td>
             <td>${btn}</td>
           </tr>`;
         }).join('');
@@ -367,6 +370,18 @@
       } catch (err) {
         console.error(err);
         alert('Error clearing assessment');
+      }
+    }
+
+    async function markNotDone(row) {
+      try {
+        const res = await fetch('/api/sheet-data/' + row + '/demo-not-done', { method: 'PATCH' });
+        const d = await res.json();
+        if (d.success) {
+          loadDemos();
+        }
+      } catch (err) {
+        console.error(err);
       }
     }
 
