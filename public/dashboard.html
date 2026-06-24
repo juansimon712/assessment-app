@@ -20,6 +20,8 @@
         <a href="dashboard.html" class="active"><i class="fas fa-list"></i> Submissions</a>
         <a href="tutor-view.html"><i class="fas fa-user-graduate"></i> Tutor Demo Assessment</a>
         <a href="admin-tutors.html"><i class="fas fa-users-cog"></i> Manage Tutors</a>
+        <a href="completed.html"><i class="fas fa-check-circle"></i> Demo Completed</a>
+        <a href="conversion.html"><i class="fas fa-percent"></i> Conversion Rate</a>
         <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analytics</a>
       </nav>
       <div class="sidebar-footer">
@@ -38,18 +40,31 @@
 
       <div class="content-area">
         <div class="page-header">
-          <h1>Demo Tracking</h1>
-          <p>Auto-refreshes every 30s. <span id="sheetSyncInfo"></span></p>
+          <div>
+            <h1>Demo Tracking</h1>
+            <p>Auto-refreshes every 30s. <span id="sheetSyncInfo"></span></p>
+          </div>
+          <div class="demo-count-widget">
+            <label><i class="fas fa-calendar-day"></i> Demos on</label>
+            <input type="date" id="demoCountDate">
+            <span class="demo-count-result" id="demoCountResult">—</span>
+          </div>
         </div>
         <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <label style="font-size:0.85rem;color:var(--text-secondary)">Filter by Tutor:</label>
+          <label style="font-size:0.85rem;color:var(--text-secondary)">Tutor:</label>
           <select id="tutorFilter" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)">
             <option value="">All Tutors</option>
           </select>
-          <label style="font-size:0.85rem;color:var(--text-secondary);margin-left:8px">Date:</label>
-          <input type="date" id="dateFilter" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem">
+          <label style="font-size:0.85rem;color:var(--text-secondary);margin-left:8px">From:</label>
+          <input type="date" id="dateFrom" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem">
+          <label style="font-size:0.85rem;color:var(--text-secondary);margin-left:8px">To:</label>
+          <input type="date" id="dateTo" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem">
           <label style="font-size:0.85rem;color:var(--text-secondary);margin-left:8px">Slot:</label>
-          <input type="text" id="slotFilter" placeholder="Search slot..." style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem;width:140px">
+          <input type="text" id="slotFilter" placeholder="Search slot..." style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem;width:120px">
+          <label style="font-size:0.85rem;color:var(--text-secondary);margin-left:8px">Demo Status:</label>
+          <select id="demoStatusFilter" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)">
+            <option value="">All</option>
+          </select>
           <label style="font-size:0.85rem;color:var(--text-secondary);margin-left:8px">Follow Up:</label>
           <select id="followUpFilter" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)">
             <option value="">All</option>
@@ -59,6 +74,8 @@
             <option value="Hot">Hot</option>
             <option value="Converted">Converted</option>
           </select>
+          <button id="sortBtn" style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);cursor:pointer;font-size:0.82rem;display:flex;align-items:center;gap:4px"><i class="fas fa-arrow-up-wide-short"></i> <span id="sortLabel">Newest</span></button>
+          <button id="clearFilters" style="padding:6px 12px;border:1px solid var(--danger);border-radius:var(--radius-sm);background:transparent;color:var(--danger);cursor:pointer;font-size:0.82rem;display:flex;align-items:center;gap:4px"><i class="fas fa-eraser"></i> Clear</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -119,18 +136,21 @@
     loadTutors();
 
     document.getElementById('tutorFilter').addEventListener('change', loadSheetData);
-    document.getElementById('dateFilter').addEventListener('change', renderFilteredSheet);
+    document.getElementById('dateFrom').addEventListener('change', renderFilteredSheet);
+    document.getElementById('dateTo').addEventListener('change', renderFilteredSheet);
     document.getElementById('slotFilter').addEventListener('input', renderFilteredSheet);
+    document.getElementById('demoStatusFilter').addEventListener('change', renderFilteredSheet);
     document.getElementById('followUpFilter').addEventListener('change', renderFilteredSheet);
 
     document.getElementById('sheetTableBody').addEventListener('click', async (e) => {
       const tr = e.target.closest('tr[data-row]');
       if (!tr || e.target.tagName === 'SELECT') return;
       const row = tr.dataset.row;
+      const rowTutor = tr.dataset.tutor || '';
       try {
         const res = await fetch('/api/assessments/by-row/' + row);
         const a = await res.json();
-        if (!a) {
+        if (!a || (a.tutor_name && rowTutor && a.tutor_name.toLowerCase() !== rowTutor.toLowerCase())) {
           const cells = tr.cells;
           document.getElementById('modalTitle').textContent = (cells[3]?.textContent || 'Demo') + ' — ' + (cells[2]?.textContent || '');
           document.getElementById('modalBody').innerHTML = `
@@ -207,6 +227,7 @@
     });
 
     let cachedSheetData = { entries: [], lastSync: null };
+    let sortAsc = false;
 
     function normalizeDate(val) {
       if (!val) return '';
@@ -219,38 +240,79 @@
       return yy + '-' + mm + '-' + dd;
     }
 
+    function populateDemoStatusFilter() {
+      const statuses = [...new Set(cachedSheetData.entries.map(e => e.demo_status).filter(Boolean))].sort();
+      const sel = document.getElementById('demoStatusFilter');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">All</option>' + statuses.map(s => `<option value="${s}" ${s === cur ? 'selected' : ''}>${s}</option>`).join('');
+    }
+
     function renderFilteredSheet() {
-      const dateVal = document.getElementById('dateFilter').value;
+      const fromVal = document.getElementById('dateFrom').value;
+      const toVal = document.getElementById('dateTo').value;
       const slotVal = document.getElementById('slotFilter').value.toLowerCase().trim();
+      const demoStatusVal = document.getElementById('demoStatusFilter').value;
       const followUpVal = document.getElementById('followUpFilter').value;
-      const entries = cachedSheetData.entries.filter(e => {
-        if (dateVal && normalizeDate(e.date) !== dateVal) return false;
+      let entries = cachedSheetData.entries.filter(e => {
+        const nd = normalizeDate(e.date);
+        if (fromVal && nd < fromVal) return false;
+        if (toVal && nd > toVal) return false;
         if (slotVal && !(e.slot || '').toLowerCase().includes(slotVal)) return false;
+        if (demoStatusVal && (e.demo_status || '') !== demoStatusVal) return false;
         if (followUpVal && (e.status || '') !== followUpVal) return false;
         return true;
       });
+      entries.sort((a, b) => sortAsc ? a.row - b.row : b.row - a.row);
+      populateDemoStatusFilter();
       const tbody = document.getElementById('sheetTableBody');
       if (!entries.length) {
         tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text-secondary)">No sheet data found</td></tr>';
         return;
       }
       const followUpOptions = ['New', 'In Conversation', 'CNR', 'Hot', 'Converted'];
-      tbody.innerHTML = entries.map(e => `
-        <tr data-row="${e.row}" style="cursor:pointer">
+      const rowClass = s => { const s2 = s.toLowerCase(); if (s2.includes('not done')) return 'DemoNotDone'; if (s2.includes('done')) return 'DemoDone'; if (s2 === 'converted') return 'Converted'; if (s2 === 'hot') return 'Hot'; return 'New'; };
+      tbody.innerHTML = entries.map(e => `<tr data-row="${e.row}" data-tutor="${(e.tutor_name || '').replace(/"/g, '&quot;')}" class="row-${rowClass(e.demo_status)}" style="cursor:pointer">
           <td>${e.date || '-'}</td>
           <td>${e.time || '-'}</td>
           <td>${e.slot || '-'}</td>
           <td><strong>${e.student_name || '-'}</strong></td>
           <td>${e.age || '-'}</td>
           <td>${e.language || '-'}</td>
-          <td><span class="status-badge ${(() => { const s = e.demo_status.toLowerCase(); if (s.includes('not done')) return 'DemoNotDone'; if (s.includes('done')) return 'DemoDone'; if (s === 'converted') return 'Converted'; return 'New'; })()}">${e.demo_status}</span></td>
+          <td><span class="status-badge ${rowClass(e.demo_status)}">${e.demo_status}</span></td>
           <td><select class="sheet-status-select" data-row="${e.row}" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8rem;background:var(--surface);color:var(--text)" onclick="event.stopPropagation()">${followUpOptions.map(s => `<option value="${s}" ${s === e.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
           <td>${e.tutor_name || '-'}</td>
           <td>${e.agent_name || '-'}</td>
           <td>${e.phone || '-'}</td>
-        </tr>
-      `).join('');
+        </tr>`).join('');
     }
+
+    function clearAllFilters() {
+      document.getElementById('tutorFilter').value = '';
+      document.getElementById('dateFrom').value = '';
+      document.getElementById('dateTo').value = '';
+      document.getElementById('slotFilter').value = '';
+      document.getElementById('demoStatusFilter').value = '';
+      document.getElementById('followUpFilter').value = '';
+      document.getElementById('demoCountDate').value = '';
+      document.getElementById('demoCountResult').textContent = '—';
+      loadSheetData();
+    }
+
+    document.getElementById('sortBtn').addEventListener('click', () => {
+      sortAsc = !sortAsc;
+      const icon = document.getElementById('sortBtn').querySelector('i');
+      const label = document.getElementById('sortLabel');
+      if (sortAsc) {
+        icon.className = 'fas fa-arrow-down-wide-short';
+        label.textContent = 'Oldest';
+      } else {
+        icon.className = 'fas fa-arrow-up-wide-short';
+        label.textContent = 'Newest';
+      }
+      renderFilteredSheet();
+    });
+
+    document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
 
     async function loadSheetData() {
       try {
@@ -268,6 +330,20 @@
 
     loadSheetData();
     setInterval(loadSheetData, 30000);
+
+    // Demo count widget
+    document.getElementById('demoCountDate').addEventListener('change', async (e) => {
+      const date = e.target.value;
+      const el = document.getElementById('demoCountResult');
+      if (!date) { el.textContent = '—'; return; }
+      try {
+        const res = await fetch('/api/demo-count?date=' + encodeURIComponent(date));
+        const data = await res.json();
+        el.textContent = data.count + ' demo' + (data.count !== 1 ? 's' : '');
+      } catch {
+        el.textContent = '—';
+      }
+    });
   </script>
 </body>
 </html>
