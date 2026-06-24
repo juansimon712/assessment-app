@@ -294,7 +294,10 @@
           const esc = s => (s || '').replace(/'/g, "\\'");
           const row = e.row;
           const btn = a
-            ? `<button class="btn btn-secondary" style="padding:4px 10px;font-size:0.8rem" data-row="${row}" onclick="viewAssessmentByRow(${row})">View</button>`
+            ? `<div style="display:flex;gap:4px">
+                <button class="btn btn-secondary" style="padding:4px 10px;font-size:0.8rem" data-row="${row}" onclick="viewAssessmentByRow(${row})">View</button>
+                <button class="btn btn-danger" style="padding:4px 10px;font-size:0.8rem" onclick="event.stopPropagation();clearAssessment(${row})">Clear</button>
+               </div>`
             : `<button class="btn btn-primary" style="padding:4px 10px;font-size:0.8rem" data-row="${row}" onclick="openForm(${row},'${esc(e.tutor_name)}','${esc(e.student_name)}','${esc(e.slot)}','${esc(e.date)}','${esc(e.time)}','${esc(e.age)}','${esc(e.language)}')">Assess</button>`;
           const st = e.demo_status || 'New';
           return `<tr style="cursor:pointer" data-row="${row}" class="row-${rowClass(e.demo_status)}">
@@ -349,6 +352,22 @@
           <div class="modal-field"><label>Submitted</label><div class="value">${new Date(a.created_at + 'Z').toLocaleString()}</div></div>`;
         document.getElementById('viewModal').classList.add('open');
       } catch (err) { console.error(err); }
+    }
+
+    async function clearAssessment(row) {
+      if (!confirm('Clear this assessment and reset demo status to New?')) return;
+      try {
+        const res = await fetch('/api/assessments/by-row/' + row, { method: 'DELETE' });
+        const d = await res.json();
+        if (d.success) {
+          loadDemos();
+        } else {
+          alert(d.error || 'Failed to clear');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error clearing assessment');
+      }
     }
 
     document.getElementById('viewModalClose').addEventListener('click', () => {
