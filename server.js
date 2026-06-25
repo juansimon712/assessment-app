@@ -476,7 +476,7 @@ app.get('/api/assessments/by-row/:row', (req, res) => {
   if (!a) {
     const entry = sheetDataCache.find(e => e.row === row);
     if (entry) {
-      a = db.prepare("SELECT * FROM assessments WHERE tutor_name = ? AND student_name = ? AND slot = ? AND (date = ? OR date = '' OR date IS NULL) ORDER BY created_at DESC LIMIT 1").get(entry.tutor_name, entry.student_name, entry.slot, entry.date);
+      a = db.prepare("SELECT * FROM assessments WHERE tutor_name = ? AND student_name = ? AND slot = ? AND date = ? AND time = ? ORDER BY created_at DESC LIMIT 1").get(entry.tutor_name, entry.student_name, entry.slot, (entry.date || '').trim(), (entry.time || '').trim());
     }
   }
   if (!a) return res.json(null);
