@@ -505,7 +505,7 @@ app.delete('/api/assessments/by-row/:row', async (req, res) => {
     db.prepare("INSERT INTO sheet_statuses (row_number, status, demo_status) VALUES (?, ?, ?) ON CONFLICT(row_number) DO UPDATE SET status = ?, demo_status = ?, updated_at = CURRENT_TIMESTAMP").run(row, 'New', 'New', 'New', 'New');
     const entry = sheetDataCache.find(e => e.row === row);
     if (entry) { entry.status = 'New'; entry.demo_status = 'New'; }
-    await updateSheetRow(row, 'New');
+    await updateSheetRow(row, '');
     res.json({ success: true });
   } catch (err) {
     console.error(err);
