@@ -288,7 +288,7 @@
         );
         const assessments = await Promise.all(assessmentPromises);
 
-        const rowClass = s => { const s2 = s.toLowerCase(); if (s2.includes('not done')) return 'DemoNotDone'; if (s2.includes('done')) return 'DemoDone'; if (s2 === 'converted') return 'Converted'; if (s2 === 'hot') return 'Hot'; return 'New'; };
+        const rowClass = s => { const s2 = s.toLowerCase(); if (s2.includes('assessment pending')) return 'AssessmentPending'; if (s2.includes('not done')) return 'DemoNotDone'; if (s2.includes('done')) return 'DemoDone'; if (s2 === 'converted') return 'Converted'; if (s2 === 'hot') return 'Hot'; return 'New'; };
         tbody.innerHTML = entries.map((e, i) => {
           const a = assessments[i];
           const esc = s => (s || '').replace(/'/g, "\\'");
