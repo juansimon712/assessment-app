@@ -470,6 +470,9 @@ app.get('/api/assessments', requireAuth, (req, res) => {
 app.get('/api/assessments/by-row/:row', (req, res) => {
   const a = db.prepare('SELECT * FROM assessments WHERE sheet_row = ? ORDER BY created_at DESC LIMIT 1').get(req.params.row);
   if (!a) return res.json(null);
+  if (req.query.tutor && a.tutor_name && a.tutor_name.toLowerCase() !== req.query.tutor.toLowerCase()) {
+    return res.json(null);
+  }
   a.topics_known = JSON.parse(a.topics_known || '[]');
   a.topics_covered = JSON.parse(a.topics_covered || '[]');
   a.revision_topics = JSON.parse(a.revision_topics || '[]');
