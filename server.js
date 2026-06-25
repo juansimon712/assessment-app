@@ -417,7 +417,7 @@ app.get('/api/topics/:level', (req, res) => {
   res.json(topics);
 });
 
-app.post('/api/assessments', (req, res) => {
+app.post('/api/assessments', async (req, res) => {
   try {
     const { tutor_name, phone, slot, student_name, student_age, language, level, topics_known, topics_covered, start_topic, revision_topics, feedback, interest_level, additional_remarks, date, time, sheet_row } = req.body;
     if (!slot || !student_name || !student_age || !language || !level || !feedback || !interest_level) {
@@ -439,18 +439,23 @@ app.post('/api/assessments', (req, res) => {
       const entry = sheetDataCache.find(e => e.row === parseInt(sheet_row));
       if (entry) { entry.status = 'Demo Done'; entry.demo_status = 'Demo Done'; }
     } else {
-      appendToSheet({
+      const newRow = await appendToSheet({
         demo_status: 'Demo Done',
         slot, date, time, tutor_name, student_name,
         age: student_age, language, phone,
       });
+      if (newRow) {
+        sheet_row = newRow;
+        db.prepare('UPDATE assessments SET sheet_row = ? WHERE id = ?').run(newRow, result.lastInsertRowid);
+        db.prepare("INSERT INTO sheet_statuses (row_number, status, demo_status) VALUES (?, ?, ?) ON CONFLICT(row_number) DO UPDATE SET status = ?, demo_status = ?, updated_at = CURRENT_TIMESTAMP").run(newRow, 'Demo Done', 'Demo Done', 'Demo Done', 'Demo Done');
+      }
     }
     appendAssessmentToSheet({
       tutor_name, phone, slot, student_name,
       student_age, language, level,
       topics_known, topics_covered, start_topic,
       revision_topics, feedback, interest_level,
-      additional_remarks, date, time, sheet_row,
+      additional_remarks, date, time, sheet_row: sheet_row,
     });
     res.json({ success: true });
   } catch (err) {
@@ -472,17 +477,7 @@ app.get('/api/assessments', requireAuth, (req, res) => {
 
 app.get('/api/assessments/by-row/:row', (req, res) => {
   const row = parseInt(req.params.row);
-  let a = db.prepare('SELECT * FROM assessments WHERE sheet_row = ? ORDER BY created_at DESC LIMIT 1').get(row);
-  if (!a) {
-    const entry = sheetDataCache.find(e => e.row === row);
-    if (entry) {
-      if (req.query.tutor) {
-        a = db.prepare("SELECT * FROM assessments WHERE tutor_name = ? AND student_name = ? AND slot = ? AND date = ? AND time = ? ORDER BY created_at DESC LIMIT 1").get(entry.tutor_name, entry.student_name, entry.slot, (entry.date || '').trim(), (entry.time || '').trim());
-      } else {
-        a = db.prepare("SELECT * FROM assessments WHERE tutor_name = ? AND student_name = ? AND student_age = ? AND slot = ? ORDER BY created_at DESC LIMIT 1").get(entry.tutor_name, entry.student_name, (entry.age || '').trim(), entry.slot);
-      }
-    }
-  }
+  const a = db.prepare('SELECT * FROM assessments WHERE sheet_row = ? ORDER BY created_at DESC LIMIT 1').get(row);
   if (!a) return res.json(null);
   if (req.query.tutor && a.tutor_name && a.tutor_name.toLowerCase() !== req.query.tutor.toLowerCase()) {
     return res.json(null);
@@ -490,10 +485,6 @@ app.get('/api/assessments/by-row/:row', (req, res) => {
   a.topics_known = JSON.parse(a.topics_known || '[]');
   a.topics_covered = JSON.parse(a.topics_covered || '[]');
   a.revision_topics = JSON.parse(a.revision_topics || '[]');
-  if (!a.sheet_row) {
-    db.prepare('UPDATE assessments SET sheet_row = ? WHERE id = ?').run(row, a.id);
-    a.sheet_row = row;
-  }
   res.json(a);
 });
 
@@ -610,15 +601,19 @@ async function appendToSheet(data) {
       '', '', '',
       data.phone || ''
     ]];
-    await sheets.spreadsheets.values.append({
+    const res = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
       range: "'Trial 2.0'!A:R",
       valueInputOption: 'USER_ENTERED',
       insertDataOption: 'INSERT_ROWS',
       requestBody: { values },
     });
+    const range = res.data?.updates?.updatedRange || '';
+    const m = range.match(/R(\d+)$/);
+    return m ? parseInt(m[1]) : null;
   } catch (err) {
     console.error('Sheet append error:', err.message);
+    return null;
   }
 }
 
@@ -769,9 +764,32 @@ async function syncSheet() {
     lastSync = new Date().toISOString();
     console.log(`Sheet synced: ${entries.length} entries`);
     syncTutorsFromSheet();
+    backfillAssessments();
   } catch (err) {
     console.error('Sheet sync error:', err.message);
   }
+}
+
+function backfillAssessments() {
+  const assessments = db.prepare('SELECT * FROM assessments WHERE sheet_row IS NULL').all();
+  let updated = 0;
+  for (const a of assessments) {
+    const entry = sheetDataCache.find(e => {
+      if (!e.tutor_name || !a.tutor_name) return false;
+      if (e.tutor_name.toLowerCase() !== a.tutor_name.toLowerCase()) return false;
+      if (e.student_name && a.student_name && e.student_name.toLowerCase() !== a.student_name.toLowerCase()) return false;
+      if (e.slot && a.slot && e.slot !== a.slot) return false;
+      if (e.date && a.date && e.date !== a.date) return false;
+      if (e.time && a.time && e.time !== a.time) return false;
+      if (e.age && a.student_age && e.age !== a.student_age) return false;
+      return true;
+    });
+    if (entry) {
+      db.prepare('UPDATE assessments SET sheet_row = ? WHERE id = ?').run(entry.row, a.id);
+      updated++;
+    }
+  }
+  if (updated > 0) console.log(`Backfilled ${updated} assessments with sheet_row`);
 }
 
 app.get('/api/sheet-tutors', (req, res) => {
