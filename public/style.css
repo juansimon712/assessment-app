@@ -819,6 +819,7 @@ tbody tr:nth-child(even):hover {
 .status-badge.Not { background: rgba(220, 38, 38, 0.15); color: #fca5a5; }
 .status-badge.DemoDone { background: rgba(251, 146, 60, 0.2); color: #fdba74; }
 .status-badge.AssessmentPending { background: rgba(217, 119, 6, 0.2); color: #fcd34d; }
+.status-badge.DemoCancelled { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
 .status-badge.DemoNotDone { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
 .status-badge.Converted { background: rgba(34, 197, 94, 0.2); color: #86efac; }
 .status-badge.Beginner { background: rgba(21, 99, 86, 0.15); color: #6ee7b7; }
@@ -845,6 +846,10 @@ tbody tr.row-Hot:hover { background: rgba(168, 85, 247, 0.16); }
 tbody tr.row-DemoNotDone { background: rgba(239, 68, 68, 0.08); }
 tbody tr.row-DemoNotDone:nth-child(even) { background: rgba(239, 68, 68, 0.11); }
 tbody tr.row-DemoNotDone:hover { background: rgba(239, 68, 68, 0.16); }
+
+tbody tr.row-DemoCancelled { background: rgba(239, 68, 68, 0.08); }
+tbody tr.row-DemoCancelled:nth-child(even) { background: rgba(239, 68, 68, 0.11); }
+tbody tr.row-DemoCancelled:hover { background: rgba(239, 68, 68, 0.16); }
 
 tbody tr.row-AssessmentPending { background: rgba(217, 119, 6, 0.08); }
 tbody tr.row-AssessmentPending:nth-child(even) { background: rgba(217, 119, 6, 0.11); }
