@@ -7,47 +7,43 @@
 }
 
 :root {
-  --bg: #141210;
-  --surface: rgba(28, 25, 23, 0.85);
-  --surface-hover: rgba(41, 37, 33, 0.9);
-  --text: #e7e5e4;
-  --text-secondary: #a8a29e;
-  --text-muted: #78716c;
-  --border: rgba(68, 64, 60, 0.4);
+  --bg: #f5f5f0;
+  --surface: rgba(255, 255, 255, 0.95);
+  --surface-hover: rgba(240, 240, 235, 0.95);
+  --text: #1c1917;
+  --text-secondary: #57534e;
+  --text-muted: #a8a29e;
+  --border: rgba(200, 195, 185, 0.5);
   --primary: #156356;
   --primary-dark: #0d4f44;
-  --primary-light: rgba(21, 99, 86, 0.15);
-  --primary-glow: rgba(21, 99, 86, 0.12);
+  --primary-light: rgba(21, 99, 86, 0.08);
+  --primary-glow: rgba(21, 99, 86, 0.06);
   --success: #156356;
-  --success-light: rgba(21, 99, 86, 0.1);
+  --success-light: rgba(21, 99, 86, 0.06);
   --danger: #b45309;
-  --danger-light: rgba(180, 83, 9, 0.1);
+  --danger-light: rgba(180, 83, 9, 0.06);
   --warning: #d97706;
-  --warning-light: rgba(217, 119, 6, 0.1);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.4);
+  --warning-light: rgba(217, 119, 6, 0.06);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.12);
   --radius: 16px;
-  --radius-sm: 10px;
+  --radius-sm: 50px;
   --radius-xs: 8px;
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --sidebar-bg: rgba(20, 18, 16, 0.95);
-  --sidebar-text: rgba(168, 162, 150, 0.9);
-  --sidebar-active: #ffffff;
+  --sidebar-bg: rgba(255, 255, 255, 0.98);
+  --sidebar-text: rgba(87, 83, 78, 0.9);
+  --sidebar-active: #1c1917;
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --mesh-1: #1c1917;
-  --mesh-2: #141210;
-  --mesh-3: #292521;
+  --mesh-1: #e8e6e0;
+  --mesh-2: #f0efe8;
+  --mesh-3: #faf9f4;
 }
 
 body {
   font-family: var(--font);
   background: var(--bg);
-  background-image: radial-gradient(ellipse 80% 60% at 0% 0%, var(--mesh-1) 0%, transparent 60%),
-                    radial-gradient(ellipse 60% 50% at 100% 20%, var(--mesh-2) 0%, transparent 50%),
-                    radial-gradient(ellipse 50% 40% at 50% 100%, var(--mesh-3) 0%, transparent 50%);
-  background-attachment: fixed;
   color: var(--text);
   transition: background var(--transition), color var(--transition);
   min-height: 100vh;
@@ -74,8 +70,6 @@ a:hover {
   min-height: 100vh;
   padding: 20px;
   background: var(--bg);
-  background-image: radial-gradient(ellipse 80% 50% at 0% 50%, rgba(21, 99, 86, 0.06) 0%, transparent 60%),
-                    radial-gradient(ellipse 60% 40% at 100% 20%, rgba(180, 83, 9, 0.04) 0%, transparent 50%);
 }
 
 .auth-card {
@@ -253,16 +247,16 @@ a:hover {
 
 .alert.error {
   display: block;
-  background: #2d1a1a;
-  color: #fca5a5;
-  border: 1px solid #7f1d1d;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .alert.success {
   display: block;
-  background: #1a2d1a;
-  color: #6ee7b7;
-  border: 1px solid #064e3b;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
 /* Layout */
@@ -283,8 +277,6 @@ a:hover {
 .sidebar {
   width: 250px;
   background: var(--sidebar-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -293,7 +285,7 @@ a:hover {
   bottom: 0;
   z-index: 100;
   transition: transform var(--transition), background var(--transition);
-  box-shadow: 2px 0 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 1px 0 20px rgba(0, 0, 0, 0.04);
 }
 
 .sidebar-header {
@@ -303,7 +295,7 @@ a:hover {
   padding: 24px 24px 20px;
   font-size: 1.2rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--text);
   letter-spacing: -0.3px;
 }
 
@@ -327,8 +319,8 @@ a:hover {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  border-radius: 50px;
   color: var(--sidebar-text);
   text-decoration: none;
   font-size: 0.88rem;
@@ -345,14 +337,15 @@ a:hover {
 }
 
 .sidebar-nav a:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--sidebar-active);
   text-decoration: none;
 }
 
 .sidebar-nav a.active {
-  background: rgba(99, 102, 241, 0.2);
-  color: #fff;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .sidebar-nav a.active::before {
@@ -369,15 +362,15 @@ a:hover {
 
 .sidebar-footer {
   padding: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border);
 }
 
 .sidebar-footer a {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  border-radius: 50px;
   color: var(--sidebar-text);
   text-decoration: none;
   font-size: 0.88rem;
@@ -385,7 +378,7 @@ a:hover {
 }
 
 .sidebar-footer a:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--sidebar-active);
   text-decoration: none;
 }
@@ -811,20 +804,20 @@ tbody tr:nth-child(even):hover {
   text-transform: uppercase;
 }
 
-/* Status badge colors: New=blue, Demo Done=orange, Hot=violet, Converted=green */
-.status-badge.New { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
-.status-badge.Contacted { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; }
-.status-badge.CNR { background: rgba(217, 70, 239, 0.15); color: #f9a8d4; }
-.status-badge.Hot { background: rgba(168, 85, 247, 0.2); color: #c4b5fd; }
-.status-badge.Not { background: rgba(220, 38, 38, 0.15); color: #fca5a5; }
-.status-badge.DemoDone { background: rgba(251, 146, 60, 0.2); color: #fdba74; }
-.status-badge.AssessmentPending { background: rgba(217, 119, 6, 0.2); color: #fcd34d; }
-.status-badge.DemoCancelled { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-.status-badge.DemoNotDone { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-.status-badge.Converted { background: rgba(34, 197, 94, 0.2); color: #86efac; }
-.status-badge.Beginner { background: rgba(21, 99, 86, 0.15); color: #6ee7b7; }
-.status-badge.Intermediate { background: rgba(180, 83, 9, 0.15); color: #fcd34d; }
-.status-badge.Advanced { background: rgba(180, 83, 9, 0.2); color: #f9a8d4; }
+/* Status badge colors */
+.status-badge.New { background: rgba(37, 99, 235, 0.1); color: #1d4ed8; }
+.status-badge.Contacted { background: rgba(99, 102, 241, 0.1); color: #4338ca; }
+.status-badge.CNR { background: rgba(219, 39, 119, 0.1); color: #9d174d; }
+.status-badge.Hot { background: rgba(147, 51, 234, 0.1); color: #7c3aed; }
+.status-badge.Not { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
+.status-badge.DemoDone { background: rgba(234, 88, 12, 0.1); color: #c2410c; }
+.status-badge.AssessmentPending { background: rgba(217, 119, 6, 0.1); color: #b45309; }
+.status-badge.DemoCancelled { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.status-badge.DemoNotDone { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+.status-badge.Converted { background: rgba(22, 163, 74, 0.1); color: #15803d; }
+.status-badge.Beginner { background: rgba(21, 99, 86, 0.1); color: #0f766e; }
+.status-badge.Intermediate { background: rgba(217, 119, 6, 0.1); color: #b45309; }
+.status-badge.Advanced { background: rgba(147, 51, 234, 0.1); color: #7c3aed; }
 
 /* Row-level coloring by demo status */
 tbody tr.row-New { background: rgba(59, 130, 246, 0.06); }
