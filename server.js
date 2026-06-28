@@ -426,7 +426,7 @@ app.post('/api/assessments', async (req, res) => {
     const stmt = db.prepare(`INSERT INTO assessments
       (user_id, tutor_name, phone, slot, student_name, student_age, language, level, topics_known, topics_covered, start_topic, revision_topics, feedback, interest_level, additional_remarks, date, time, sheet_row)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-    stmt.run(
+    const result = stmt.run(
       req.session.userId, tutor_name || '', phone || '', slot, student_name, student_age, language, level,
       JSON.stringify(topics_known || []), JSON.stringify(topics_covered || []),
       start_topic || '', JSON.stringify(revision_topics || []),
@@ -764,6 +764,7 @@ async function syncSheet() {
     lastSync = new Date().toISOString();
     console.log(`Sheet synced: ${entries.length} entries`);
     syncTutorsFromSheet();
+    fixExistingMismatches();
     backfillAssessments();
   } catch (err) {
     console.error('Sheet sync error:', err.message);
@@ -779,6 +780,26 @@ function normalizeDate(d) {
     return `${yy}-${mm}-${dd}`;
   }
   return d.trim();
+}
+
+function fixExistingMismatches() {
+  const assessments = db.prepare('SELECT id, sheet_row, tutor_name, student_name FROM assessments WHERE sheet_row IS NOT NULL').all();
+  let fixed = 0;
+  for (const a of assessments) {
+    const entry = sheetDataCache.find(e => e.row === a.sheet_row);
+    if (!entry) continue;
+    const ds = entry.demo_status || '';
+    if (ds !== 'New' && ds !== 'Demo Not Done' && ds !== 'Assessment Pending') continue;
+    if (!entry.tutor_name || !a.tutor_name) continue;
+    if (entry.tutor_name.toLowerCase() !== a.tutor_name.toLowerCase()) continue;
+    if (!entry.student_name || !a.student_name) continue;
+    if (entry.student_name.toLowerCase() !== a.student_name.toLowerCase()) continue;
+    updateSheetRow(entry.row, 'Demo Done');
+    entry.demo_status = 'Demo Done';
+    db.prepare("INSERT INTO sheet_statuses (row_number, status, demo_status) VALUES (?, ?, ?) ON CONFLICT(row_number) DO UPDATE SET demo_status = ?, updated_at = CURRENT_TIMESTAMP").run(entry.row, 'New', 'Demo Done', 'Demo Done');
+    fixed++;
+  }
+  if (fixed > 0) console.log(`Fixed ${fixed} already-linked assessments with wrong sheet status`);
 }
 
 function backfillAssessments() {
@@ -823,6 +844,11 @@ function backfillAssessments() {
     });
     if (entry && !db.prepare('SELECT id FROM assessments WHERE sheet_row = ? AND id != ?').get(entry.row, a.id)) {
       db.prepare('UPDATE assessments SET sheet_row = ? WHERE id = ?').run(entry.row, a.id);
+      if (entry.demo_status === 'New') {
+        updateSheetRow(entry.row, 'Demo Done');
+        entry.demo_status = 'Demo Done';
+        db.prepare("INSERT INTO sheet_statuses (row_number, status, demo_status) VALUES (?, ?, ?) ON CONFLICT(row_number) DO UPDATE SET demo_status = ?, updated_at = CURRENT_TIMESTAMP").run(entry.row, 'New', 'Demo Done', 'Demo Done');
+      }
       linked++;
     }
   }
