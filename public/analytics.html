@@ -277,7 +277,7 @@
             const tutorEntries = entries.filter(e => {
               const sn = (e.tutor_name || '').toLowerCase();
               const tn = t.name.toLowerCase();
-              return sn === tn || sn.startsWith(tn) || tn.startsWith(sn) || sn.includes(tn);
+              return sn === tn;
             });
             const converted = tutorEntries.filter(e => e.status === 'Converted' || e.demo_status === 'Converted').length;
             const demoDone = tutorEntries.filter(e => e.demo_status === 'Demo Done' || e.demo_status === 'Assessment Pending').length;
