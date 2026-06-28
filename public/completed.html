@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo Completed</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .comp-page * { margin:0;padding:0;box-sizing:border-box; }
+    .comp-page { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh; }
+    .comp-page .layout { display:flex;min-height:100vh; }
+    .comp-page .sidebar { width:240px;background:var(--sidebar-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100; }
+    .comp-page .sidebar-header { display:flex;align-items:center;gap:10px;padding:20px 24px;font-size:1.3rem;font-weight:700;color:var(--text);border-bottom:1px solid var(--border); }
+    .comp-page .sidebar-header i { color:var(--primary);font-size:1.5rem; }
+    .comp-page .sidebar-nav { display:flex;flex-direction:column;padding:16px 12px;gap:4px;flex:1; }
+    .comp-page .nav-item { display:flex;align-items:center;gap:12px;padding:10px 18px;border-radius:50px;color:var(--sidebar-text);text-decoration:none;font-size:0.9rem;transition:all var(--transition); }
+    .comp-page .nav-item i { width:20px;text-align:center;font-size:1.1rem; }
+    .comp-page .nav-item:hover { background:rgba(0,0,0,0.04);color:var(--sidebar-active); }
+    .comp-page .nav-item.active { background:var(--primary);color:#fff; }
+    .comp-page .sidebar-footer { padding:16px 20px;border-top:1px solid var(--border); }
+    .comp-page .sidebar-footer a { display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:50px;color:var(--text-secondary);text-decoration:none;font-size:0.88rem; }
+    .comp-page .sidebar-footer a:hover { background:rgba(0,0,0,0.04);color:var(--text); }
+    .comp-page .main { flex:1;margin-left:240px;display:flex;flex-direction:column; }
+    .comp-page .header { display:flex;align-items:center;gap:16px;padding:16px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50; }
+    .comp-page .content { padding:24px 28px;flex:1; }
+    .comp-page .page-header { margin-bottom:24px; }
+    .comp-page .page-header h1 { font-size:1.6rem;font-weight:700;margin-bottom:4px; }
+    .comp-page .page-header p { color:var(--text-secondary);font-size:0.9rem; }
+    .card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px; }
+    .card-header { display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border); }
+    .card-header h3 { font-size:1rem;font-weight:600; }
+    .card-body { padding:20px; }
+    .progress-ring { text-align:center;padding:32px 0; }
+    .progress-ring .big-num { font-size:4rem;font-weight:800;background:linear-gradient(135deg,var(--primary),#25af98);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+    .progress-ring .label { font-size:0.9rem;color:var(--text-secondary);margin-top:4px; }
+    .progress-bar { height:16px;background:var(--border);border-radius:8px;overflow:hidden;margin:16px 0; }
+    .progress-bar .fill { height:100%;background:linear-gradient(90deg,var(--primary),#25af98);border-radius:8px;transition:width 0.8s ease; }
+    .stats-row { display:flex;gap:24px;justify-content:center;margin:16px 0; }
+    .stats-row .stat { text-align:center; }
+    .stats-row .stat .num { font-size:1.8rem;font-weight:700; }
+    .stats-row .stat .lbl { font-size:0.8rem;color:var(--text-secondary); }
+    .breakdown table { width:100%;border-collapse:collapse; }
+    .breakdown th,.breakdown td { padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:0.88rem; }
+    .breakdown th { font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary); }
+    .breakdown tbody tr:hover { background:var(--surface-hover); }
+    .no-data { text-align:center;padding:40px;color:var(--text-secondary); }
+    .no-data i { font-size:2.5rem;margin-bottom:12px; }
+    @media(max-width:768px) { .comp-page .sidebar{transform:translateX(-100%)} .comp-page .sidebar.open{transform:translateX(0)} .comp-page .main{margin-left:0} .comp-page .content{padding:16px} }
+  </style>
+</head>
+<body>
+<div class="comp-page">
+  <div class="layout">
+    <aside class="sidebar" id="compSidebar">
+      <div class="sidebar-header"><i class="fas fa-check-circle"></i> AssessPro</div>
+      <nav class="sidebar-nav">
+        <a href="analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics</a>
+        <a href="dashboard.html" class="nav-item"><i class="fas fa-list"></i> Submissions</a>
+        <a href="tutor-view.html" class="nav-item"><i class="fas fa-user-graduate"></i> Tutor Demo Assessment</a>
+        <a href="admin-tutors.html" class="nav-item"><i class="fas fa-users-cog"></i> Manage Tutors</a>
+        <a href="completed.html" class="nav-item active"><i class="fas fa-check-circle"></i> Demo Completed</a>
+        <a href="conversion.html" class="nav-item"><i class="fas fa-percent"></i> Conversion Rate</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" id="compLogout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="header">
+        <button class="hamburger" id="compHamburger" style="display:none;background:none;border:none;font-size:1.3rem;color:var(--text);cursor:pointer"><i class="fas fa-bars"></i></button>
+        <span style="font-weight:600;font-size:1.05rem">Demo Completed</span>
+      </header>
+      <section class="content">
+        <div class="page-header">
+          <h1>Demo Completion Rate</h1>
+          <p>Percentage of demos completed (Demo Done + Assessment Pending) out of total entries.</p>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+          <label style="font-size:0.85rem;color:var(--text-secondary)">From:</label>
+          <input type="date" id="dateFrom" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem">
+          <label style="font-size:0.85rem;color:var(--text-secondary)">To:</label>
+          <input type="date" id="dateTo" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:0.85rem">
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Overall Completion</h3><span id="lastUpdated" style="font-size:0.8rem;color:var(--text-secondary)"></span></div>
+          <div class="card-body">
+            <div class="progress-ring" id="overallRing">
+              <div class="big-num" id="rateDisplay">0%</div>
+              <div class="label">Completion Rate</div>
+            </div>
+            <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+            <div class="stats-row">
+              <div class="stat"><div class="num" id="completedCount">0</div><div class="lbl">Completed</div></div>
+              <div class="stat"><div class="num" id="totalCount">0</div><div class="lbl">Total</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Breakdown by Tutor</h3></div>
+          <div class="card-body breakdown" id="breakdownWrap"><div class="no-data"><i class="fas fa-chart-bar"></i><p>Loading...</p></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  (async () => {
+    try { const r = await fetch('/api/me'); const d = await r.json(); if (!d.authenticated) { window.location.href = 'login.html'; return; } } catch { window.location.href = 'login.html'; }
+  })();
+  document.getElementById('compLogout')?.addEventListener('click', async e => { e.preventDefault(); await fetch('/api/logout', {method:'POST'}); window.location.href='index.html'; });
+  const sidebar = document.getElementById('compSidebar');
+  document.getElementById('compHamburger').addEventListener('click', () => sidebar.classList.toggle('open'));
+  document.addEventListener('click', e => { if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !document.getElementById('compHamburger').contains(e.target)) sidebar.classList.remove('open'); });
+
+  function normalizeDate(v) { if (!v) return ''; const m = v.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})$/); if (!m) return v; let dd=m[1].padStart(2,'0'),mm=m[2].padStart(2,'0'),yy=m[3]; if(yy.length===2)yy='20'+yy; return yy+'-'+mm+'-'+dd; }
+  function inRange(d,f,t) { const n=normalizeDate(d); if(!n)return true; return (!f||n>=f)&&(!t||n<=t); }
+
+  async function load() {
+    const df = document.getElementById('dateFrom').value, dt = document.getElementById('dateTo').value;
+    const rateDisplay = document.getElementById('rateDisplay'), progressFill = document.getElementById('progressFill');
+    const completedCount = document.getElementById('completedCount'), totalCount = document.getElementById('totalCount');
+    const updated = document.getElementById('lastUpdated'), wrap = document.getElementById('breakdownWrap');
+    try {
+      const params = new URLSearchParams(); if(df)params.set('from',df); if(dt)params.set('to',dt);
+      const qs = params.toString();
+      const overallRes = await fetch('/api/demo-completion' + (qs?'?'+qs:'')).then(r=>r.json());
+      const sheetRes = await fetch('/api/sheet-data').then(r=>r.json());
+      const entries = sheetRes.entries || [];
+      const filtered = df||dt ? entries.filter(e=>inRange(e.date,df,dt)) : entries;
+      const total = filtered.length;
+      const completed = filtered.filter(e => { const s=(e.demo_status||'').toLowerCase(); return (s.includes('done')&&!s.includes('not'))||s==='assessment pending'; }).length;
+      const rate = total > 0 ? Math.round(completed/total*100) : 0;
+
+      rateDisplay.textContent = rate + '%';
+      progressFill.style.width = rate + '%';
+      completedCount.textContent = completed;
+      totalCount.textContent = total;
+      updated.textContent = new Date().toLocaleString();
+
+      const tutors = [...new Set(filtered.map(e=>e.tutor_name).filter(Boolean))].sort();
+      const rows = tutors.map(tn => {
+        const te = filtered.filter(e => e.tutor_name === tn);
+        const tc = te.filter(e => { const s=(e.demo_status||'').toLowerCase(); return (s.includes('done')&&!s.includes('not'))||s==='assessment pending'; }).length;
+        const pct = te.length > 0 ? Math.round(tc/te.length*100) : 0;
+        return { name: tn, total: te.length, completed: tc, pct };
+      }).sort((a,b) => b.pct - a.pct || b.total - a.total);
+      const maxPct = rows.length > 0 ? rows[0].pct : 1;
+
+      if (!rows.length) { wrap.innerHTML = '<div class="no-data"><i class="fas fa-chart-bar"></i><p>No data for this period.</p></div>'; return; }
+      wrap.innerHTML = `<table><thead><tr><th>Tutor</th><th>Total</th><th>Completed</th><th>Rate</th></tr></thead><tbody>${rows.map(r => `<tr><td style="font-weight:600">${r.name}</td><td style="text-align:center">${r.total}</td><td style="text-align:center">${r.completed}</td><td><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700;min-width:40px">${r.pct}%</span><div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:${(r.pct/maxPct)*100}%;background:linear-gradient(90deg,var(--primary),#25af98);border-radius:4px"></div></div></div></td></tr>`).join('')}</tbody></table>`;
+    } catch(e) { wrap.innerHTML = '<div class="no-data"><i class="fas fa-database"></i><p>Error loading data.</p></div>'; }
+  }
+  document.getElementById('dateFrom').addEventListener('change', load);
+  document.getElementById('dateTo').addEventListener('change', load);
+  load();
+});
+</script>
+</body>
+</html>
