@@ -185,7 +185,7 @@
         <section class="content">
           <div class="page-header">
             <h1>Tutor Conversion Rankings</h1>
-            <p>Ranked by conversion rate (Converted ÷ Total Demos Done × 100).</p>
+            <p>Ranked by conversion rate (Converted ÷ Total Demos × 100).</p>
           </div>
 
           <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
@@ -295,14 +295,13 @@
           const maxPct = ranking[0].pct || 1;
           wrap.innerHTML = `
             <table>
-              <thead><tr><th>Rank</th><th>Tutor</th><th>Code</th><th>Demos Done</th><th>Converted</th><th>Conversion %</th><th>Incentive</th></tr></thead>
+              <thead><tr><th>Rank</th><th>Tutor</th><th>Code</th><th>Demos Done</th><th>Conversion %</th><th>Incentive</th></tr></thead>
               <tbody>${ranking.map((r, i) => `
                 <tr>
                   <td style="font-weight:700;font-size:1.1rem;text-align:center">${i < 3 ? ['🥇','🥈','🥉'][i] : '#' + (i+1)}</td>
                   <td style="font-weight:600">${r.name}</td>
                   <td style="font-family:monospace;font-weight:700;color:var(--primary)">${r.code || '-'}</td>
                   <td style="text-align:center">${r.total}</td>
-                  <td style="text-align:center">${r.converted}</td>
                   <td>
                     <div style="display:flex;align-items:center;gap:8px">
                       <span style="font-weight:700;font-size:0.9rem;min-width:44px">${r.pct}%</span>
