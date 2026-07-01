@@ -477,7 +477,28 @@ app.get('/api/assessments', requireAuth, (req, res) => {
 
 app.get('/api/assessments/by-row/:row', (req, res) => {
   const row = parseInt(req.params.row);
-  const a = db.prepare('SELECT * FROM assessments WHERE sheet_row = ? ORDER BY created_at DESC LIMIT 1').get(row);
+  let a = db.prepare('SELECT * FROM assessments WHERE sheet_row = ? ORDER BY created_at DESC LIMIT 1').get(row);
+  if (!a) {
+    const entry = sheetDataCache.find(e => e.row === row);
+    if (entry && entry.tutor_name && entry.student_name) {
+      a = db.prepare(`SELECT * FROM assessments WHERE
+        LOWER(tutor_name) = LOWER(?) AND
+        LOWER(student_name) = LOWER(?) AND
+        slot = ? AND
+        date = ? AND
+        time = ?
+        ORDER BY created_at DESC LIMIT 1`).get(entry.tutor_name, entry.student_name, entry.slot || '', entry.date || '', entry.time || '');
+      if (!a) {
+        a = db.prepare(`SELECT * FROM assessments WHERE
+          LOWER(tutor_name) = LOWER(?) AND
+          LOWER(student_name) = LOWER(?)
+          ORDER BY created_at DESC LIMIT 1`).get(entry.tutor_name, entry.student_name);
+      }
+      if (a) {
+        db.prepare('UPDATE assessments SET sheet_row = ? WHERE id = ?').run(row, a.id);
+      }
+    }
+  }
   if (!a) return res.json(null);
   if (req.query.tutor && a.tutor_name && a.tutor_name.toLowerCase() !== req.query.tutor.toLowerCase()) {
     return res.json(null);
@@ -842,7 +863,7 @@ function backfillAssessments() {
       if (e.time.toLowerCase().replace(/\s+/g, '') !== a.time.toLowerCase().replace(/\s+/g, '')) return false;
       return true;
     });
-    if (entry && !db.prepare('SELECT id FROM assessments WHERE sheet_row = ? AND id != ?').get(entry.row, a.id)) {
+    if (entry) {
       db.prepare('UPDATE assessments SET sheet_row = ? WHERE id = ?').run(entry.row, a.id);
       if (entry.demo_status === 'New') {
         updateSheetRow(entry.row, 'Demo Done');
