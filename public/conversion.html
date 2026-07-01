@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const filtered = df||dt ? entries.filter(e=>inRange(e.date,df,dt)) : entries;
       const demoDone = filtered.filter(e => { const s=(e.demo_status||'').toLowerCase(); return (s.includes('done')&&!s.includes('not'))||s==='assessment pending'; }).length;
       const converted = filtered.filter(e => (e.demo_status||'').toLowerCase()==='converted').length;
-      const rate = demoDone > 0 ? Math.round(converted/demoDone*100) : 0;
+      const rate = demoDone + converted > 0 ? Math.round(converted/(demoDone+converted)*100) : 0;
 
       rateDisplay.textContent = rate + '%';
       progressFill.style.width = rate + '%';
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const te = filtered.filter(e => e.tutor_name === tn);
         const td = te.filter(e => { const s=(e.demo_status||'').toLowerCase(); return (s.includes('done')&&!s.includes('not'))||s==='assessment pending'; }).length;
         const tc = te.filter(e => (e.demo_status||'').toLowerCase()==='converted').length;
-        const pct = td > 0 ? Math.round(tc/td*100) : 0;
+        const pct = td + tc > 0 ? Math.round(tc/(td+tc)*100) : 0;
         return { name: tn, demoDone: td, converted: tc, pct };
       }).sort((a,b) => b.pct - a.pct || b.demoDone - a.demoDone);
       const maxPct = rows.length > 0 ? rows[0].pct : 1;
