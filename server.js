@@ -434,10 +434,12 @@ app.post('/api/assessments', async (req, res) => {
       sheet_row || null
     );
     if (sheet_row) {
-      updateSheetRow(sheet_row, 'Demo Done');
-      db.prepare("INSERT INTO sheet_statuses (row_number, status, demo_status) VALUES (?, ?, ?) ON CONFLICT(row_number) DO UPDATE SET status = ?, demo_status = ?, updated_at = CURRENT_TIMESTAMP").run(sheet_row, 'Demo Done', 'Demo Done', 'Demo Done', 'Demo Done');
-      const entry = sheetDataCache.find(e => e.row === parseInt(sheet_row));
-      if (entry) { entry.status = 'Demo Done'; entry.demo_status = 'Demo Done'; }
+      if (sheet_row > 3964) {
+        updateSheetRow(sheet_row, 'Demo Done');
+        db.prepare("INSERT INTO sheet_statuses (row_number, status, demo_status) VALUES (?, ?, ?) ON CONFLICT(row_number) DO UPDATE SET status = ?, demo_status = ?, updated_at = CURRENT_TIMESTAMP").run(sheet_row, 'Demo Done', 'Demo Done', 'Demo Done', 'Demo Done');
+        const entry = sheetDataCache.find(e => e.row === parseInt(sheet_row));
+        if (entry) { entry.status = 'Demo Done'; entry.demo_status = 'Demo Done'; }
+      }
     } else {
       const newRow = await appendToSheet({
         demo_status: 'Demo Done',
@@ -529,10 +531,12 @@ app.delete('/api/assessments/by-row/:row', async (req, res) => {
   try {
     const row = parseInt(req.params.row);
     db.prepare('DELETE FROM assessments WHERE sheet_row = ?').run(row);
-    db.prepare("INSERT INTO sheet_statuses (row_number, status, demo_status) VALUES (?, ?, ?) ON CONFLICT(row_number) DO UPDATE SET status = ?, demo_status = ?, updated_at = CURRENT_TIMESTAMP").run(row, 'New', 'New', 'New', 'New');
-    const entry = sheetDataCache.find(e => e.row === row);
-    if (entry) { entry.status = 'New'; entry.demo_status = 'New'; }
-    await updateSheetRow(row, '');
+    if (row > 3964) {
+      db.prepare("INSERT INTO sheet_statuses (row_number, status, demo_status) VALUES (?, ?, ?) ON CONFLICT(row_number) DO UPDATE SET status = ?, demo_status = ?, updated_at = CURRENT_TIMESTAMP").run(row, 'New', 'New', 'New', 'New');
+      const entry = sheetDataCache.find(e => e.row === row);
+      if (entry) { entry.status = 'New'; entry.demo_status = 'New'; }
+    }
+    if (row > 3964) await updateSheetRow(row, '');
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -757,14 +761,21 @@ async function syncSheet() {
       const sheetDemo = (r[0] || '').trim() || 'New';
       const storedDemo = ss ? ss.demo_status : null;
       let useDemo;
-      if (storedDemo) {
-        useDemo = storedDemo;
-      } else if (sheetDemo === 'Demo Not Done') {
-        useDemo = 'New';
-      } else if (sheetDemo === 'Demo Done') {
-        useDemo = 'Assessment Pending';
-      } else {
+      if (i + 1 <= 3964) {
+        // Old rows (June 1-30): use raw sheet column A value, no modifications
         useDemo = sheetDemo;
+      } else {
+        // New rows (July 1+): stored status or assessment-based
+        if (storedDemo) {
+          useDemo = storedDemo;
+        } else if (sheetDemo === 'Demo Not Done') {
+          useDemo = 'Demo Not Done';
+        } else if (sheetDemo === 'Demo Done') {
+          useDemo = 'Demo Done';
+        } else {
+          const hasAssessment = db.prepare('SELECT id FROM assessments WHERE sheet_row = ? LIMIT 1').get(i + 1);
+          useDemo = hasAssessment ? 'Demo Done' : 'New';
+        }
       }
       entries.push({
         row: i + 1,
@@ -807,6 +818,7 @@ function fixExistingMismatches() {
   const assessments = db.prepare('SELECT id, sheet_row, tutor_name, student_name FROM assessments WHERE sheet_row IS NOT NULL').all();
   let fixed = 0;
   for (const a of assessments) {
+    if (!a.sheet_row || a.sheet_row <= 3964) continue;
     const entry = sheetDataCache.find(e => e.row === a.sheet_row);
     if (!entry) continue;
     const ds = entry.demo_status || '';
@@ -827,6 +839,7 @@ function backfillAssessments() {
   const assessments = db.prepare('SELECT * FROM assessments WHERE sheet_row IS NOT NULL').all();
   let cleared = 0;
   for (const a of assessments) {
+    if (a.sheet_row <= 3964) continue;
     const entry = sheetDataCache.find(e => e.row === a.sheet_row);
     if (!entry) {
       db.prepare('UPDATE assessments SET sheet_row = NULL WHERE id = ?').run(a.id);
@@ -865,7 +878,7 @@ function backfillAssessments() {
     });
     if (entry) {
       db.prepare('UPDATE assessments SET sheet_row = ? WHERE id = ?').run(entry.row, a.id);
-      if (entry.demo_status === 'New') {
+      if (entry.row > 3964 && entry.demo_status === 'New') {
         updateSheetRow(entry.row, 'Demo Done');
         entry.demo_status = 'Demo Done';
         db.prepare("INSERT INTO sheet_statuses (row_number, status, demo_status) VALUES (?, ?, ?) ON CONFLICT(row_number) DO UPDATE SET demo_status = ?, updated_at = CURRENT_TIMESTAMP").run(entry.row, 'New', 'Demo Done', 'Demo Done');
